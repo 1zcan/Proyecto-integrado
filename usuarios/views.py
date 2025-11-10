@@ -32,7 +32,7 @@ def registro(request):
 def login_view(request):
     
     if request.user.is_authenticated:
-        return redirect('articulos:lista_articulos')
+        return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -47,7 +47,7 @@ def login_view(request):
                 next_url = request.GET.get('next')
                 if next_url:
                     return redirect(next_url)
-                return redirect('articulos:lista_articulos')
+                return redirect('dashboard:dashboard')
         else:
             messages.error(request, 'Nombre de usuario o contraseña incorrectos.')
     else:
