@@ -1,141 +1,183 @@
-{% extends 'base.html' %}
-{% load static %}
+{% comment %}
+Nombre de archivo recomendado:
+usuarios/templates/registration/login.html
+(Si usas django.contrib.auth.urls)
 
-{% block title %}Iniciar Sesión{% endblock %}
+O en:
+usuarios/templates/usuarios/login.html
+(Si tienes una vista de login personalizada)
+{% endcomment %}
 
-{% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5 col-lg-5">
-            <div class="card shadow-lg">
-                <div class="card-body p-4">
-                    <h3 class="text-center mb-4">Sistema de Trazabilidad e información Perinatal</h3>
-                    <h4 class="text-center mb-4">Hospital Clínico Herminda Martín</h4>
-                    
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    
+   
+</head>
+<body>
 
-                    <form method="POST">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
-                            <input type="text" 
-                                   name="username" 
-                                   class="form-control" 
-                                   id="{{ form.username.id_for_label }}"
-                                   required>
-                            {% if form.username.errors %}
-                                <div class="text-danger small mt-1">{{ form.username.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
-                            <input type="password" 
-                                   name="password" 
-                                   class="form-control" 
-                                   id="{{ form.password.id_for_label }}"
-                                   required>
-                            {% if form.password.errors %}
-                                <div class="text-danger small mt-1">{{ form.password.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="d-flex justify-content-center">
-                            <button type="submit" class="btn btn-primary btn-lg">Iniciar Sesión</button>
-                        </div>
-                    </form>
-
-                    <hr class="my-4">
-
-                    <div class="text-center">
-                       
-                        <a href="{% url 'usuarios:registro' %}" class="btn btn-outline-secondary">
-                            Crear una cuenta
-                        </a>
-                        <br>
-                        <br>
-                        <span>Hospital Clínico Herminda Martín --- Ministerio de Salud de Chile</span>
-                    </div>
-                    
-                </div>
+    <div class="login-container">
+        
+        <div class="login-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="32" fill="#007bff"/>
+                <path d="M32 18 V 46 M 18 32 H 46" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            
             </div>
-        </div>
+
+        <h1>Sistema de Trazabilidad e<br>Información Perinatal</h1>
+        <h2>Hospital Clínico Herminda Martín</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div style="color: red; margin-bottom: 1rem;">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label|default:'id_username' }}">Usuario</label>
+                {{ form.username }}
+                </div>
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label|default:'id_password' }}">Contraseña</label>
+                {{ form.password }}
+                </div>
+            
+            <button type="submit" class="btn-submit">Iniciar Sesión</button>
+        </form>
+
+        <footer>
+            Hospital Clínico Herminda Martín — Ministerio de Salud de Chile
+        </footer>
+
     </div>
-</div>
-
-<style>
-    body {
-        background-color: #dfdede;
-    }
-
-    .card {
-        border: none;
-        border-radius: 15px;
-    }
     
-    .card-body {
-        padding: 2.5rem;
-    }
+</body>
+ <style>
+       
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    h3 {
-        color: #333;
-        font-weight: 600;
-        margin-bottom: 2rem;
-        font-size: x-large;
-    }
-     h4 {
-        color: #807f7f;
-        font-weight: 200;
-        margin-bottom: 2rem;
-        font-size: math;
-    }
-    span{
-        font-size: small;
-    }
-    
-    .form-label {
-        font-weight: 500;
-        color: #555;
-        margin-bottom: 0.5rem;
-    }
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .form-control {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-        font-size: 1rem;
-    }
+        .login-container {
+            width: 100%;
+            max-width: 400px; 
+            padding: 2.5rem;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
 
-    .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .btn {
-        border-radius: 8px;
-        padding: 0.75rem;
-        font-weight: 500;
-        font-size: 1rem;
-    }
+       
+        .login-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1.5rem auto;
+            border-radius: 50%;
+            background-color: #e6f0ff; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .btn-lg {
-        padding: 0.875rem;
-    }
+        .login-icon svg {
+            width: 28px;
+            height: 28px;
+        }
 
-    .shadow-lg {
-        box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
-    }
+        
+        h1 {
+            font-size: 1.5rem; 
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
 
-    hr {
-        opacity: 0.1;
-    }
-</style>
-{% endblock %}
+        h2 {
+            font-size: 1rem; 
+            font-weight: 400;
+            color: #495057;
+            margin-bottom: 2rem;
+        }
+
+       
+        form {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #343a40;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+
+       
+        .btn-submit {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #007bff; 
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #0056b3; 
+        }
+
+       
+        footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+</html>
