@@ -27,3 +27,4 @@ python manage.py migrate
 
 python manage.py runserver
 
+EN CASO DE ERROR 400, usar pestaña de incognito o forzar conexión http.
