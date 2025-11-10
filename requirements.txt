@@ -1,0 +1,43 @@
+# Core Django
+asgiref
+Django==4.2.0
+sqlparse
+tzdata
+
+# Database
+PyMySQL
+
+# Configuration
+python-decouple
+
+# Security & Authentication
+cryptography
+cffi
+pycparser
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+
+# Images
+pillow
+
+# Para análisis de datos 
+pandas
+numpy
+matplotlib
+seaborn
+
+# Para reportes y Excel 
+openpyxl
+xlsxwriter
+reportlab
+
+# Para validaciones y utilidades
+django-filter
+
+# Para desarrollo y debugging
+django-debug-toolbar
+
+# Para testing 
+pytest
+pytest-django

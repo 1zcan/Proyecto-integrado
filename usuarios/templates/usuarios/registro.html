@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Cuenta{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Crear Cuenta</h2>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% if field.field.widget.input_type == 'password' %}
+                                    <input type="password" 
+                                           name="{{ field.name }}" 
+                                           class="form-control" 
+                                           id="{{ field.id_for_label }}"
+                                           {% if field.field.required %}required{% endif %}>
+                                {% else %}
+                                    <input type="text" 
+                                           name="{{ field.name }}" 
+                                           class="form-control" 
+                                           id="{{ field.id_for_label }}"
+                                           {% if field.field.required %}required{% endif %}>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1">{{ field.errors }}</div>
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-flex mt-4 justify-content-center">
+                            <button type="submit" class="btn btn-success btn-lg">Crear Cuenta</button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-muted mb-2">¿Ya tienes una cuenta?</p>
+                        <a href="{% url 'usuarios:login' %}" class="btn btn-outline-primary">
+                            Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-body {
+        padding: 2.5rem;
+    }
+
+    h2 {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 2rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .btn-lg {
+        padding: 0.875rem;
+    }
+
+    .shadow-lg {
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+    }
+
+    hr {
+        opacity: 0.1;
+    }
+</style>
+{% endblock %}
