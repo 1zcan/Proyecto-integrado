@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "usuarios.apps.UsuariosConfig",
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -135,6 +136,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = '/usuarios/login/'
-LOGIN_REDIRECT_URL = '/articulos/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 LOGIN_URL = 'usuarios:login'
