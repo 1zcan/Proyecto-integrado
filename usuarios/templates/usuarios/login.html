@@ -54,6 +54,8 @@ usuarios/templates/usuarios/login.html
                 </div>
             
             <button type="submit" class="btn-submit">Iniciar Sesión</button>
+            
+            <a href="{% url 'usuarios:registro' %}" class="btn-register">Registro</a>
         </form>
 
         <footer>
@@ -173,7 +175,36 @@ usuarios/templates/usuarios/login.html
             background-color: #0056b3; 
         }
 
-       
+       .btn-register {
+           
+            display: block; 
+            width: 100%;
+            
+           
+            margin-top: 0.75rem; 
+
+         
+            padding: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            text-align: center;
+            text-decoration: none; 
+            
+           
+            color: #007bff; 
+            background-color: #ffffff; 
+            border: 1px solid #007bff; 
+
+        
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .btn-register:hover {
+           
+            background-color: #007bff;
+            color: #ffffff;
+        }
         footer {
             margin-top: 2rem;
             font-size: 0.8rem;

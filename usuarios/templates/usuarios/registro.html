@@ -1,129 +1,254 @@
-{% extends 'base.html' %}
-{% load static %}
+{% comment %}
+Archivo: usuarios/templates/usuarios/registro.html
+Estilo adaptado para coincidir con login.html
+{% endcomment %}
 
-{% block title %}Crear Cuenta{% endblock %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta</title>
+</head>
+<body>
 
-{% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg">
-                <div class="card-body p-4">
-                    <h2 class="text-center mb-4">Crear Cuenta</h2>
-                    
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <form method="POST">
-                        {% csrf_token %}
-                        
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">
-                                    {{ field.label }}
-                                </label>
-                                {% if field.field.widget.input_type == 'password' %}
-                                    <input type="password" 
-                                           name="{{ field.name }}" 
-                                           class="form-control" 
-                                           id="{{ field.id_for_label }}"
-                                           {% if field.field.required %}required{% endif %}>
-                                {% else %}
-                                    <input type="text" 
-                                           name="{{ field.name }}" 
-                                           class="form-control" 
-                                           id="{{ field.id_for_label }}"
-                                           {% if field.field.required %}required{% endif %}>
-                                {% endif %}
-                                {% if field.errors %}
-                                    <div class="text-danger small mt-1">{{ field.errors }}</div>
-                                {% endif %}
-                                {% if field.help_text %}
-                                    <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-
-                        <div class="d-flex mt-4 justify-content-center">
-                            <button type="submit" class="btn btn-success btn-lg">Crear Cuenta</button>
-                        </div>
-                    </form>
-
-                    <hr class="my-4">
-
-                    <div class="text-center">
-                        <p class="text-muted mb-2">¿Ya tienes una cuenta?</p>
-                        <a href="{% url 'usuarios:login' %}" class="btn btn-outline-primary">
-                            Iniciar Sesión
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <div class="login-container">
+        
+        <div class="login-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="32" fill="#007bff"/>
+                <path d="M32 18 V 46 M 18 32 H 46" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            </svg>
         </div>
+
+        <h1>Crear Nueva Cuenta</h1>
+        <h2>Sistema de Trazabilidad e Información Perinatal</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-message alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }} {% if field.help_text %}
+                        <small class="help-text">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="errorlist">
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn-submit">Crear Cuenta</button>
+            <a href="{% url 'usuarios:login' %}" class="btn-register">Inicia Sesión</a>
+        </form>
+
+        <footer>
+            Hospital Clínico Herminda Martín — Ministerio de Salud de Chile
+        </footer>
+
     </div>
-</div>
+    
+</body>
 
 <style>
-    body {
-        background-color: #f8f9fa;
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
-    .card {
-        border: none;
-        border-radius: 15px;
+    html, body {
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8f9fa; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0; 
+        height: auto;
+        min-height: 100%;
     }
-    
-    .card-body {
+
+    .login-container {
+        width: 100%;
+        max-width: 600px; 
         padding: 2.5rem;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        text-align: center;
     }
 
-    h2 {
-        color: #333;
-        font-weight: 600;
-        margin-bottom: 2rem;
-    }
     
-    .form-label {
-        font-weight: 500;
-        color: #555;
+    .login-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1.5rem auto;
+        border-radius: 50%;
+        background-color: #e6f0ff; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    
+    h1 {
+        font-size: 1.5rem; 
+        font-weight: 600;
+        color: #212529;
         margin-bottom: 0.5rem;
     }
 
-    .form-control {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-        font-size: 1rem;
+    h2 {
+        font-size: 1rem; 
+        font-weight: 400;
+        color: #495057;
+        margin-bottom: 2rem;
     }
 
-    .form-control:focus {
-        border-color: #198754;
-        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+    
+    form {
+        text-align: left;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #343a40;
+    }
+
+  
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"] {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    
+    
+    .form-errors, .alert-message {
+        color: #721c24; 
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        text-align: center;
     }
     
-    .btn {
-        border-radius: 8px;
-        padding: 0.75rem;
-        font-weight: 500;
+    .alert-message.alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        display: block;
+        margin-top: 0.25rem;
+    }
+
+    .errorlist {
+        color: #721c24;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        padding-left: 1.5rem; 
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    .errorlist li {
+        margin-top: 0.25rem;
+    }
+ 
+    .btn-submit {
+        width: 100%;
+        padding: 0.8rem;
         font-size: 1rem;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: #007bff; 
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
     }
 
-    .btn-lg {
-        padding: 0.875rem;
+    .btn-submit:hover {
+        background-color: #0056b3; 
+    }
+    
+    .btn-register {
+        display: block; 
+        width: 100%;
+        margin-top: 0.75rem; 
+        padding: 0.8rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 4px;
+        text-align: center;
+        text-decoration: none; 
+        color: #007bff; 
+        background-color: #ffffff;
+        border: 1px solid #007bff;
+        transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    .shadow-lg {
-        box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
+    .btn-register:hover {
+        background-color: #007bff;
+        color: #ffffff;
     }
-
-    hr {
-        opacity: 0.1;
+       
+    footer {
+        margin-top: 2rem;
+        font-size: 0.8rem;
+        color: #6c757d;
     }
 </style>
-{% endblock %}
+</html>
