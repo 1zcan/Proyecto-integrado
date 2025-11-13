@@ -25,15 +25,15 @@
             <tbody>
             {% for log in logs %}
                 <tr>
-                    <td class="text-nowrap">{{ log.fecha|date:"d/m/Y H:i" }}</td>
+                    <td class="text-nowrap">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
                     <td>{{ log.usuario|default:"-" }}</td>
                     
                     <td>
-                        {% if log.accion == 'CREATE' %}
+                        {% if log.accion == 'create' %}
                             <span class="badge bg-success-subtle text-success-emphasis">
-                        {% elif log.accion == 'UPDATE' %}
+                        {% elif log.accion == 'update' %}
                             <span class="badge bg-warning-subtle text-warning-emphasis">
-                        {% elif log.accion == 'DELETE' %}
+                        {% elif log.accion == 'delete' %}
                             <span class="badge bg-danger-subtle text-danger-emphasis">
                         {% else %}
                             <span class="badge bg-secondary-subtle text-secondary-emphasis">
@@ -43,7 +43,7 @@
                     </td>
                     
                     <td>{{ log.modelo }}</td>
-                    <td>{{ log.obj_id }}</td>
+                    <td>{{ log.objeto_id }}</td>
                     <td class="text-nowrap">{{ log.ip_address|default:"-" }}</td>
                     <td class="small text-muted">{{ log.detalle|default:"-" }}</td>
                 </tr>

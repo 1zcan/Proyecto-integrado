@@ -5,8 +5,4 @@ class AuditoriaConfig(AppConfig):
     name = 'auditoria'
 
     def ready(self):
-        """
-        Importa las señales (signals) cuando la app está lista.
-        Esto es crucial para que los receivers se conecten.
-        """
         import auditoria.signals
