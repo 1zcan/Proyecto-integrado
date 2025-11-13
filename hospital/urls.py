@@ -25,6 +25,8 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/usuarios/login/', permanent=False)), 
     path('usuarios/', include('usuarios.urls', namespace='usuarios')),
     path('dashboard/', include('dashboard.urls')),
+    path('auditoria/', include('auditoria.urls')),
+   
 ]
 
 if settings.DEBUG:
