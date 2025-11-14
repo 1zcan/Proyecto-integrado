@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Ficha de Madre{% endblock %}
+
+{% block content %}
+<h2>Ficha de Madre</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">Identificación y Datos Sociodemográficos</div>
+        <div class="card-body">
+            {{ form.as_p }}
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar Ficha</button>
+    <a href="{% url 'madre_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+</form>
+{% endblock %}

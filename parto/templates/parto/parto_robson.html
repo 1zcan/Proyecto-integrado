@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Clasificación Robson{% endblock %}
+
+{% block content %}
+<h2>Clasificación Robson</h2>
+<p>Parto ID: {{ parto.id }} - Madre: {{ parto.madre.nombre_completo }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="form-group mb-2">
+                {{ form.grupo.label_tag }}
+                {{ form.grupo }} </div>
+
+            <div class="form-check mb-2">
+                {{ form.cesarea_electiva }}
+                <label class="form-check-label" for="{{ form.cesarea_electiva.id_for_label }}">
+                    Cesárea Electiva
+                </label>
+            </div>
+            
+            <div class="form-check mb-2">
+                {{ form.cesarea_urgencia }}
+                <label class="form-check-label" for="{{ form.cesarea_urgencia.id_for_label }}">
+                    Cesárea Urgencia
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar Robson</button>
+    <a href="{% url 'parto_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+</form>
+{% endblock %}

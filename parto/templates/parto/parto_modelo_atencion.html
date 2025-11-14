@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Modelo de Atención (REM A21){% endblock %}
+
+{% block content %}
+<h2>Modelo de Atención del Parto (REM A21)</h2>
+<p>Parto ID: {{ parto.id }} - Madre: {{ parto.madre.nombre_completo }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="form-check mb-2">
+                {{ form.libertad_movimiento }}
+                <label class="form-check-label" for="{{ form.libertad_movimiento.id_for_label }}">
+                    Libertad de movimiento
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                {{ form.regimen_hidrico_amplio }}
+                <label class="form-check-label" for="{{ form.regimen_hidrico_amplio.id_for_label }}">
+                    Régimen hídrico amplio
+                </label>
+            </div>
+            
+            <div class="form-group mb-2">
+                {{ form.manejo_dolor.label_tag }}
+                {{ form.manejo_dolor }} </div>
+            
+            <div class="form-group mb-2">
+                {{ form.posicion_expulsivo.label_tag }}
+                {{ form.posicion_expulsivo }} </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar REM A21</button>
+    <a href="{% url 'parto_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+</form>
+{% endblock %}

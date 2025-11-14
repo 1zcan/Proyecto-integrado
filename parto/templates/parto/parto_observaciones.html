@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Observaciones del Parto{% endblock %}
+
+{% block content %}
+<h2>Observaciones del Parto (Bitácora)</h2>
+<p>Parto ID: {{ parto.id }} - Madre: {{ parto.madre.nombre_completo }}</p>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">Agregar Nueva Observación</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group mb-2">
+                {{ form.texto.label_tag }}
+                {{ form.texto }}
+            </div>
+            
+            <div class="form-group mb-2">
+                <label for="{{ form.clave_firma.id_for_label }}">Firma Simple (Clave)</label>
+                {{ form.clave_firma }}
+                <small class="form-text text-muted">Ingrese su clave de firma para validar esta observación.</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Firmar y Guardar Observación</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">Historial de Observaciones</div>
+    <div class="card-body">
+        {% for obs in parto.observaciones.all %}
+            <div class="alert alert-secondary">
+                <strong>{{ obs.autor.username }}</strong> ({{ obs.fecha|date:"d-m-Y H:i" }})
+                {% if obs.firma_simple %}
+                    <span class="badge badge-success">Firmado</span>
+                {% endif %}
+                <hr>
+                <p>{{ obs.texto|linebreaks }}</p>
+            </div>
+        {% empty %}
+            <p>No hay observaciones registradas para este parto.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<a href="{% url 'parto_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+{% endblock %}

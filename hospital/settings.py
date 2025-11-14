@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "usuarios.apps.UsuariosConfig",
     "dashboard",
     "auditoria",
+    'parto',
+    'madre',
 ]
 
 MIDDLEWARE = [

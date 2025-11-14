@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Listado de Madres - HCHM{% endblock %}
+
+{% block content %}
+<h2>Listado de Madres</h2>
+
+<form method="get" class="form-inline mb-3">
+    <select name="filtro_comuna" class="form-control mr-2">
+        <option value="">Todas las Comunas</option>
+        </select>
+    <select name="filtro_cesfam" class="form-control mr-2">
+        <option value="">Todos los CESFAM</option>
+        </select>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<a href="{% url 'madre_crear' %}" class="btn btn-success mb-3">Registrar Nueva Madre</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>RUT</th>
+            <th>Nombre Completo</th>
+            <th>F. Nacimiento</th>
+            <th>Comuna</th>
+            <th>CESFAM</th>
+            <th>Marcadores</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for madre in madres %}
+        <tr>
+            <td>{{ madre.rut }}</td>
+            <td>{{ madre.nombre_completo }}</td>
+            <td>{{ madre.fecha_nacimiento|date:"d-m-Y" }}</td>
+            <td>{{ madre.comuna }}</td>
+            <td>{{ madre.cesfam }}</td>
+            <td>
+                {% if madre.migrante %}Migrante {% endif %}
+                {% if madre.pueblo_originario %}P. Originario {% endif %}
+                {% if madre.discapacidad %}Discapacidad {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'madre_editar' pk=madre.pk %}" class="btn btn-sm btn-info">Ficha</a>
+                <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" class="btn btn-sm btn-warning">Tamizajes</a>
+                <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-secondary">Obs.</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No se encontraron registros de madres.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

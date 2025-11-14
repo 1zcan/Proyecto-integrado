@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Tamizajes Maternos (REM A11){% endblock %}
+
+{% block content %}
+<h2>Tamizajes Maternos (REM A11)</h2>
+<p>Madre: {{ madre.nombre_completo }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="card shadow-sm mb-3">
+        <div class="card-header">VDRL</div>
+        <div class="card-body">
+            {{ form.vdrl_resultado.label_tag }} {{ form.vdrl_resultado }}
+            {{ form.vdrl_tratamiento.label_tag }} {{ form.vdrl_tratamiento }}
+        </div>
+    </div>
+    
+    <div class="card shadow-sm mb-3">
+        <div class="card-header">VIH</div>
+        <div class="card-body">
+            {{ form.vih_resultado.label_tag }} {{ form.vih_resultado }}
+        </div>
+    </div>
+    
+    <div class="card shadow-sm mb-3">
+        <div class="card-header">Hepatitis B</div>
+        <div class="card-body">
+            {{ form.hepb_resultado.label_tag }} {{ form.hepb_resultado }}
+            {{ form.profilaxis_vhb_completa.label_tag }} {{ form.profilaxis_vhb_completa }}
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar Tamizajes</button>
+    <a href="{% url 'madre_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+</form>
+{% endblock %}

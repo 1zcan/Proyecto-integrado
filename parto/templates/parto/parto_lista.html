@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Listado de Partos - HCHM{% endblock %}
+
+{% block content %}
+<h2>Listado de Partos Registrados</h2>
+
+<form method="get" class="form-inline mb-3">
+    <input type="date" name="filtro_fecha_inicio" class="form-control mr-2" placeholder="Fecha Desde">
+    <input type="date" name="filtro_fecha_fin" class="form-control mr-2" placeholder="Fecha Hasta">
+    <select name="filtro_tipo" class="form-control mr-2">
+        <option value="">Todos los Tipos</option>
+        </select>
+    <select name="filtro_establecimiento" class="form-control mr-2">
+        <option value="">Todos los Establecimientos</option>
+        </select>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID Parto</th>
+            <th>Madre (RUT)</th>
+            <th>Fecha/Hora</th>
+            <th>Tipo Parto</th>
+            <th>EG (sem)</th>
+            <th>Establecimiento</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for parto in partos %} <tr>
+            <td>{{ parto.id }}</td>
+            <td>{{ parto.madre.nombre_completo }} ({{ parto.madre.rut }})</td>
+            <td>{{ parto.fecha|date:"d-m-Y" }} {{ parto.hora }}</td>
+            <td>{{ parto.tipo_parto }}</td>
+            <td>{{ parto.edad_gestacional_semanas }}</td>
+            <td>{{ parto.establecimiento }}</td>
+            <td>
+                <a href="{% url 'parto_editar' pk=parto.pk %}" class="btn btn-sm btn-info">Registro Clínico</a>
+                <a href="{% url 'parto_modelo_atencion' pk=parto.pk %}" class="btn btn-sm btn-secondary">REM A21</a>
+                <a href="{% url 'parto_robson' pk=parto.pk %}" class="btn btn-sm btn-secondary">Robson</a>
+                <a href="{% url 'parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-warning">Obs.</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No se encontraron registros de partos.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

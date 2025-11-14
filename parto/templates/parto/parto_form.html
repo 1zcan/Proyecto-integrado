@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Registro Clínico del Parto{% endblock %}
+
+{% block content %}
+<h2>Registro Clínico del Parto (ID: {{ parto.id }})</h2>
+<p>Madre: {{ parto.madre.nombre_completo }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">Datos del Parto</div>
+        <div class="card-body">
+            {{ form.madre.label_tag }} {{ form.madre }}
+            {{ form.fecha.label_tag }} {{ form.fecha }}
+            {{ form.hora.label_tag }} {{ form.hora }}
+            {{ form.tipo_parto.label_tag }} {{ form.tipo_parto }}
+            {{ form.edad_gestacional_semanas.label_tag }} {{ form.edad_gestacional_semanas }}
+            {{ form.establecimiento.label_tag }} {{ form.establecimiento }}
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">Indicadores H2/H3</div>
+        <div class="card-body">
+            <div class="form-check">
+                {{ form.acompanamiento_trabajo_parto }}
+                <label class="form-check-label" for="{{ form.acompanamiento_trabajo_parto.id_for_label }}">
+                    Acompañamiento en trabajo de parto
+                </label>
+            </div>
+            <div class="form-check">
+                {{ form.acompanamiento_solo_expulsivo }}
+                <label class="form-check-label" for="{{ form.acompanamiento_solo_expulsivo.id_for_label }}">
+                    Acompañamiento solo en expulsivo
+                </label>
+            </div>
+            <div class="form-check">
+                {{ form.piel_piel_madre_30min }}
+                <label class="form-check-label" for="{{ form.piel_piel_madre_30min.id_for_label }}">
+                    Contacto piel con piel madre (30 min)
+                </label>
+            </div>
+            <div class="form-check">
+                {{ form.piel_piel_acomp_30min }}
+                <label class="form-check-label" for="{{ form.piel_piel_acomp_30min.id_for_label }}">
+                    Contacto piel con piel acompañante (30 min)
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar Registro Clínico</button>
+    <a href="{% url 'parto_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+</form>
+{% endblock %}
