@@ -3,56 +3,125 @@
 {% block title %}Listado de Madres - HCHM{% endblock %}
 
 {% block content %}
-<h2>Listado de Madres</h2>
 
-<form method="get" class="form-inline mb-3">
-    <select name="filtro_comuna" class="form-control mr-2">
-        <option value="">Todas las Comunas</option>
-        </select>
-    <select name="filtro_cesfam" class="form-control mr-2">
-        <option value="">Todos los CESFAM</option>
-        </select>
-    <button type="submit" class="btn btn-primary">Filtrar</button>
-</form>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Listado de Madres</h4>
+        <p class="text-muted small mb-0">Gestión de fichas y registros</p>
+    </div>
+    <a href="{% url 'madre_crear' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Registrar Nueva Madre
+    </a>
+</div>
 
-<a href="{% url 'madre_crear' %}" class="btn btn-success mb-3">Registrar Nueva Madre</a>
+<div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-center">
+            
+            <div class="col-md-5">
+                <label for="filtro_comuna" class="form-label visually-hidden">Comuna</label>
+                <select name="filtro_comuna" id="filtro_comuna" class="form-select">
+                    <option value="">Todas las Comunas</option>
+                    </select>
+            </div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>RUT</th>
-            <th>Nombre Completo</th>
-            <th>F. Nacimiento</th>
-            <th>Comuna</th>
-            <th>CESFAM</th>
-            <th>Marcadores</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for madre in madres %}
-        <tr>
-            <td>{{ madre.rut }}</td>
-            <td>{{ madre.nombre_completo }}</td>
-            <td>{{ madre.fecha_nacimiento|date:"d-m-Y" }}</td>
-            <td>{{ madre.comuna }}</td>
-            <td>{{ madre.cesfam }}</td>
-            <td>
-                {% if madre.migrante %}Migrante {% endif %}
-                {% if madre.pueblo_originario %}P. Originario {% endif %}
-                {% if madre.discapacidad %}Discapacidad {% endif %}
-            </td>
-            <td>
-                <a href="{% url 'madre_editar' pk=madre.pk %}" class="btn btn-sm btn-info">Ficha</a>
-                <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" class="btn btn-sm btn-warning">Tamizajes</a>
-                <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-secondary">Obs.</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="7">No se encontraron registros de madres.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <div class="col-md-5">
+                <label for="filtro_cesfam" class="form-label visually-hidden">CESFAM</label>
+                <select name="filtro_cesfam" id="filtro_cesfam" class="form-select">
+                    <option value="">Todos los CESFAM</option>
+                    </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+            
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius: 8px; overflow: hidden;">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>RUT</th>
+                    <th>Nombre Completo</th>
+                    <th>F. Nacimiento</th>
+                    <th>Comuna</th>
+                    <th>CESFAM</th>
+                    <th>Marcadores</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for madre in madres %}
+                <tr>
+                    <td class="text-nowrap">{{ madre.rut }}</td>
+                    <td class="fw-medium">{{ madre.nombre_completo }}</td>
+                    <td class="text-nowrap">{{ madre.fecha_nacimiento|date:"d-m-Y" }}</td>
+                    <td>{{ madre.comuna|default:"-" }}</td>
+                    <td>{{ madre.cesfam|default:"-" }}</td>
+                    
+                    <td>
+                        {% if madre.migrante %}
+                            <span class="badge bg-info-subtle text-info-emphasis">Migrante</span>
+                        {% endif %}
+                        {% if madre.pueblo_originario %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis">P. Originario</span>
+                        {% endif %}
+                        {% if madre.discapacidad %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis">Discapacidad</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="text-nowrap">
+                        <a href="{% url 'madre_editar' pk=madre.pk %}" class="btn btn-sm btn-info" title="Editar Ficha">
+                            <i class="bi bi-pencil"></i> Ficha
+                        </a>
+                        <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" class="btn btn-sm btn-warning" title="Ver Tamizajes">
+                            <i class="bi bi-clipboard-pulse"></i> Tamizajes
+                        </a>
+                        <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-secondary" title="Ver Observaciones">
+                            <i class="bi bi-chat-text"></i> Obs.
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No se encontraron registros de madres que coincidan con los filtros.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block styles %}
+<style>
+    .table thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+    
+    .btn-sm i {
+      
+        margin-right: 3px;
+    }
+</style>
 {% endblock %}

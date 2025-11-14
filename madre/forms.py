@@ -17,7 +17,7 @@ class MadreForm(forms.ModelForm):
             'migrante', 
             'pueblo_originario', 
             'discapacidad',
-            'documentos' # Podría requerir un widget custom de carga de archivos
+            'documentos'
         ]
 
 class TamizajeMaternoForm(forms.ModelForm):
