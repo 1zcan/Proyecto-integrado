@@ -8,7 +8,6 @@ from .forms import RegistroForm, PerfilForm, FotoPerfilForm
 
 
 def registro(request):
-
     if request.user.is_authenticated:
         return redirect('articulos:lista_articulos')
     
@@ -26,11 +25,16 @@ def registro(request):
             return redirect('usuarios:login')
     else:
         form = RegistroForm()
-    return render(request, 'usuarios/registro.html', {'form': form})
+    
+   
+    context = {
+        'form': form,
+        'hide_navigation': True 
+    }
+    return render(request, 'usuarios/registro.html', context)
 
 
 def login_view(request):
-    
     if request.user.is_authenticated:
         return redirect('dashboard:dashboard')
     
@@ -52,7 +56,13 @@ def login_view(request):
             messages.error(request, 'Nombre de usuario o contraseña incorrectos.')
     else:
         form = AuthenticationForm()
-    return render(request, 'usuarios/login.html', {'form': form})
+    
+   
+    context = {
+        'form': form,
+        'hide_navigation': True 
+    }
+    return render(request, 'usuarios/login.html', context)
 
 
 @login_required
@@ -65,17 +75,21 @@ def logout_view(request):
 
 @login_required
 def perfil_view(request):
-
     if not hasattr(request.user, 'perfil'):
         Perfil.objects.create(user=request.user, rol='usuario')
     
     perfil = request.user.perfil
-    return render(request, 'usuarios/perfil.html', {'perfil': perfil})
+    
+  
+    context = {
+        'perfil': perfil,
+        'hide_navigation': False 
+    }
+    return render(request, 'usuarios/perfil.html', context)
 
 
 @login_required
 def editar_perfil_view(request):
-
     if not hasattr(request.user, 'perfil'):
         Perfil.objects.create(user=request.user, rol='usuario')
     
@@ -92,8 +106,10 @@ def editar_perfil_view(request):
         user_form = PerfilForm(instance=request.user)
         foto_form = FotoPerfilForm(instance=request.user.perfil)
 
+  
     context = {
         'user_form': user_form,
-        'foto_form': foto_form
+        'foto_form': foto_form,
+        'hide_navigation': False 
     }
     return render(request, 'usuarios/editar_perfil.html', context)
