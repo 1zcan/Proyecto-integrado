@@ -30,6 +30,7 @@ urlpatterns = [
     path('partos/', include('parto.urls')),
     path('catalogo/', include('catalogo.urls')),
     path('rn/', include('recien_nacido.urls')),
+    path('reportes/', include('reportes.urls')),
 ]
 
 if settings.DEBUG:

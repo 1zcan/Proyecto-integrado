@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'madre',
     'catalogo',
     'recien_nacido',
+    'reportes',
 ]
 
 MIDDLEWARE = [
