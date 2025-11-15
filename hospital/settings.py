@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "auditoria",
     'parto',
     'madre',
+    'catalogo',
+    'recien_nacido',
 ]
 
 MIDDLEWARE = [

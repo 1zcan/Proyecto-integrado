@@ -1,6 +1,6 @@
 from django import forms
 from .models import RecienNacido, ProfiRN, RNObservacion
-from catalogos.models import Catalogo
+from catalogo.models import Catalogo
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 class RNForm(forms.ModelForm):

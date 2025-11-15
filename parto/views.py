@@ -3,6 +3,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.urls import reverse_lazy
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
+from django.urls import reverse, reverse_lazy
 # Se necesitarían Mixins para permisos, ej: from seguridad.mixins import RolRequiredMixin
 
 class PartoListView(ListView):
@@ -67,3 +68,21 @@ class PartoObservacionesView(CreateView): # Usualmente un CreateView + ListView
         
         # 3. Guardar y registrar en auditoría [cite: 81, 220]
         return super().form_valid(form)
+    
+    
+class PartoCreateView(CreateView):
+    model = Parto
+    form_class = PartoForm
+    template_name = 'parto/parto_form.html'
+
+    def get_initial(self):
+        return {
+            'madre': self.kwargs['madre_id']
+        }
+
+    def form_valid(self, form):
+        form.instance.madre_id = self.kwargs['madre_id']
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('parto_lista')

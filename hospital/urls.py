@@ -28,7 +28,8 @@ urlpatterns = [
     path('auditoria/', include('auditoria.urls')),
     path('madres/', include('madre.urls')),
     path('partos/', include('parto.urls')),
-   
+    path('catalogo/', include('catalogo.urls')),
+    path('rn/', include('recien_nacido.urls')),
 ]
 
 if settings.DEBUG:

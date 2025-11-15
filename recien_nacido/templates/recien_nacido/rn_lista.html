@@ -2,11 +2,11 @@
   rn_lista.html
   Muestra la lista de todos los Recién Nacidos registrados.
 -->
-{% extends "base_general.html" %} <!-- Asume que tienes un base_general.html -->
+{% extends "base.html" %} <!-- Asume que tienes un base.html -->
 
 {% block titulo %}Lista de Recién Nacidos{% endblock %}
 
-{% block contenido %}
+{% block content %}
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800">Registros de Recién Nacidos</h1>
@@ -50,9 +50,9 @@
               <div class="text-sm text-gray-900">{{ rn.apgar_5 }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <a href="{% url 'rn-editar' rn.pk %}" class="text-indigo-600 hover:text-indigo-900">At. Inmediata</a>
-              <a href="{% url 'rn-profilaxis' rn.pk %}" class="ml-4 text-green-600 hover:text-green-900">Profilaxis</a>
-              <a href="{% url 'rn-observaciones' rn.pk %}" class="ml-4 text-blue-600 hover:text-blue-900">Obs.</a>
+              <a href="{% url 'rn_editar' rn.pk %}" class="text-indigo-600 hover:text-indigo-900">At. Inmediata</a>
+              <a href="{% url 'rn_profilaxis' rn.pk %}" class="ml-4 text-green-600 hover:text-green-900">Profilaxis</a>
+              <a href="{% url 'rn_observaciones' rn.pk %}" class="ml-4 text-blue-600 hover:text-blue-900">Obs.</a>
             </td>
           </tr>
         {% empty %}
@@ -66,4 +66,4 @@
     </table>
   </div>
 </div>
-{% endblock %}
+{% endblock content %}

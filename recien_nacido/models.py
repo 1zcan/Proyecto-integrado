@@ -77,11 +77,11 @@ class ProfiRN(models.Model):
     
     # Usamos Catálogo según Regla 6
     tipo = models.ForeignKey(
-        'catalogos.Catalogo',
+        'catalogo.Catalogo',
         on_delete=models.SET_NULL,
         null=True,
         related_name="profilaxis_aplicadas",
-        limit_choices_to={'tipo': 'PROFILAXIS_RN', 'activo': True}
+        limit_choices_to={'tipo': 'VAL_PROFILAXIS_RN', 'activo': True}
     )
     
     fecha_hora = models.DateTimeField("Fecha y Hora de Administración")

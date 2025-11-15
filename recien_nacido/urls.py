@@ -1,23 +1,25 @@
 from django.urls import path
 from . import views
 
+app_name = 'recien_nacido'
+
 urlpatterns = [
     # --- /rn/ ---
     
     # rn_lista.html
-    path('', views.RNListView.as_view(), name='rn-lista'),
+    path('', views.RNListView.as_view(), name='rn_lista'),
     
     # rn_form.html (para crear un RN para un parto específico)
-    path('crear/parto/<int:parto_id>/', views.RNCreateUpdateView.as_view(), name='rn-crear'),
+    path('crear/parto/<int:parto_id>/', views.RNCreateUpdateView.as_view(), name='rn_crear'),
     
     # rn_form.html (para editar un RN existente)
-    path('<int:pk>/editar/', views.RNCreateUpdateView.as_view(), name='rn-editar'),
+    path('<int:pk>/editar/', views.RNCreateUpdateView.as_view(), name='rn_editar'),
 
     # --- Sub-rutas según especificación ---
 
     # rn_profilaxis.html
-    path('<int:pk>/profilaxis/', views.RNProfilaxisView.as_view(), name='rn-profilaxis'),
+    path('<int:pk>/profilaxis/', views.RNProfilaxisView.as_view(), name='rn_profilaxis'),
 
     # rn_observaciones.html
-    path('<int:pk>/observaciones/', views.RNObservacionesView.as_view(), name='rn-observaciones'),
+    path('<int:pk>/observaciones/', views.RNObservacionesView.as_view(), name='rn_observaciones'),
 ]

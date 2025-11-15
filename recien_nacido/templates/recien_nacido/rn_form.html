@@ -2,11 +2,11 @@
   rn_form.html
   Muestra el formulario principal de RecienNacido (Atención Inmediata).
 -->
-{% extends "base_general.html" %}
+{% extends "base.html" %}
 
 {% block titulo %}{% if object.pk %}Editar RN{% else %}Registrar Nuevo RN{% endif %}{% endblock %}
 
-{% block contenido %}
+{% block content %}
 <div class="container mx-auto px-4 py-8 max-w-3xl">
   <h1 class="text-3xl font-bold text-gray-800 mb-6">
     {% if object.pk %}Editar Datos de Recién Nacido{% else %}Registrar Nuevo Recién Nacido{% endif %}

@@ -17,4 +17,7 @@ urlpatterns = [
     
     # Observaciones
     path('<int:parto_pk>/observaciones/', views.PartoObservacionesView.as_view(), name='parto_observaciones'),
+    
+    path('crear/madre/<int:madre_id>/', views.PartoCreateView.as_view(), name='parto_crear_para_madre'),
+
 ]

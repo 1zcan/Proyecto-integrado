@@ -87,6 +87,9 @@
                         <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-secondary" title="Ver Observaciones">
                             <i class="bi bi-chat-text"></i> Obs.
                         </a>
+                        <a href="{% url 'parto_crear_para_madre' madre.id %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg"></i> Agregar Parto
+                        </a>
                     </td>
                 </tr>
                 {% empty %}
