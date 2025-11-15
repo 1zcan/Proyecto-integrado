@@ -1,0 +1,77 @@
+<!-- 
+  rn_profilaxis.html
+  Muestra la bitácora de profilaxis y permite añadir nuevas.
+-->
+{% extends "base_general.html" %}
+
+{% block titulo %}Profilaxis del Recién Nacido{% endblock %}
+
+{% block contenido %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">Profilaxis del Recién Nacido</h1>
+  <p class="text-lg text-gray-600 mb-6">RN de: <strong class="font-medium">{{ rn.parto.madre.nombre_completo }}</strong> (Parto: {{ rn.parto.fecha }})</p>
+
+  <!-- Formulario para nueva profilaxis -->
+  <form method="POST" class="bg-white p-6 shadow-md rounded-lg mb-8">
+    {% csrf_token %}
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Añadir Profilaxis (REM A11/J)</h2>
+    
+    {{ profilaxis_form.non_field_errors }}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for field in profilaxis_form %}
+            {% if field.name != 'reaccion_adversa' %}
+                <div class="flex flex-col">
+                  <label for="{{ field.id_for_label }}" class="mb-2 font-medium text-sm text-gray-600">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ field.errors|join:", " }}</p>
+                  {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="flex flex-col mt-6">
+        {% with field=profilaxis_form.reaccion_adversa %}
+            <label for="{{ field.id_for_label }}" class="mb-2 font-medium text-sm text-gray-600">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ field.errors|join:", " }}</p>
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <div class="flex justify-end mt-6">
+      <button type="submit" class="px-6 py-2 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700">
+        Guardar Administración
+      </button>
+    </div>
+  </form>
+
+  <!-- Historial de Profilaxis -->
+  <div class="bg-white p-6 shadow-md rounded-lg">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Historial de Administración</h2>
+    <div class="space-y-4">
+      {% for prof in profilaxis_list %}
+        <div class="border-b border-gray-200 pb-3">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-medium text-gray-900">{{ prof.tipo.valor|default:"N/A" }}</span>
+            <span class="text-sm text-gray-600">{{ prof.fecha_hora|date:"d/m/Y H:i" }}</span>
+          </div>
+          <p class="text-sm text-gray-500 mt-1">
+            Administrado por: <strong class="font-medium text-gray-600">{{ prof.profesional }}</strong>
+            (Registrado por: {{ prof.registrado_por.username|default:"Sistema" }})
+          </p>
+          {% if prof.reaccion_adversa %}
+            <p class="text-sm text-red-600 mt-1">
+              <strong>Reacción:</strong> {{ prof.reaccion_adversa }}
+            </p>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="text-gray-500 text-sm">No hay profilaxis registradas para este RN.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

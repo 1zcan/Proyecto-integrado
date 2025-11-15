@@ -1,0 +1,72 @@
+<!-- 
+  rn_form.html
+  Muestra el formulario principal de RecienNacido (Atención Inmediata).
+-->
+{% extends "base_general.html" %}
+
+{% block titulo %}{% if object.pk %}Editar RN{% else %}Registrar Nuevo RN{% endif %}{% endblock %}
+
+{% block contenido %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">
+    {% if object.pk %}Editar Datos de Recién Nacido{% else %}Registrar Nuevo Recién Nacido{% endif %}
+  </h1>
+  <p class="text-lg text-gray-600 mb-2">Madre: <strong class="font-medium">{{ madre.nombre_completo }}</strong> ({{ madre.rut }})</p>
+  <p class="text-lg text-gray-600 mb-6">Parto: <strong class="font-medium">{{ parto.fecha|date:"d/m/Y" }}</strong> a las {{ parto.hora|time:"H:i" }}</p>
+
+  <form method="POST" class="space-y-8">
+    {% csrf_token %}
+    
+    {{ form.non_field_errors }}
+
+    <!-- Sección 1: Datos del Recién Nacido -->
+    <div class="bg-white p-6 shadow-md rounded-lg">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">1. Datos del Recién Nacido</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Campos de 2 columnas -->
+        {% for field_name in "sexo peso talla pc apgar_1 apgar_5"|split %}
+          {% with field=form|dict:field_name %}
+            <div class="flex flex-col">
+              <label for="{{ field.id_for_label }}" class="mb-2 font-medium text-sm text-gray-600">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ field.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sección 2: Atención Inmediata (REM A24) -->
+    <div class="bg-white p-6 shadow-md rounded-lg">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">2. Atención Inmediata (REM A24 D.2)</h2>
+      <div class="space-y-4">
+        <!-- Campos Boolean (Checkboxes) -->
+        {% for field_name in "reanimacion_basica reanimacion_avanzada clampeo_tardio lactancia_60min"|split %}
+          {% with field=form|dict:field_name %}
+            <div class="flex items-center">
+              {{ field }}
+              <label for="{{ field.id_for_label }}" class="ml-3 block text-sm font-medium text-gray-700">{{ field.label }}</label>
+            </div>
+            {% if field.errors %}
+              <p class="mt-1 ml-6 text-xs text-red-600">{{ field.errors|join:", " }}</p>
+            {% endif %}
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex justify-end space-x-4">
+      <a href="{% url 'rn-lista' %}" class="px-6 py-2 rounded-md text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+        Cancelar
+      </a>
+      <button type="submit" class="px-6 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700">
+        Guardar Datos RN
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+<!-- 
+  rn_observaciones.html
+  Muestra la bitácora de observaciones y permite añadir nuevas.
+-->
+{% extends "base_general.html" %}
+
+{% block titulo %}Observaciones del Recién Nacido{% endblock %}
+
+{% block contenido %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">Observaciones del Recién Nacido</h1>
+  <p class="text-lg text-gray-600 mb-6">RN de: <strong class="font-medium">{{ rn.parto.madre.nombre_completo }}</strong> (Parto: {{ rn.parto.fecha }})</p>
+
+  <!-- Formulario para nueva observación -->
+  <form method="POST" class="bg-white p-6 shadow-md rounded-lg mb-8">
+    {% csrf_token %}
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Añadir Nueva Observación / Diagnóstico</h2>
+    
+    {{ observacion_form.non_field_errors }}
+    
+    <div class="flex flex-col">
+      <label for="{{ observacion_form.texto.id_for_label }}" class="mb-2 font-medium text-sm text-gray-600">{{ observacion_form.texto.label }}</S.label>
+      {{ observacion_form.texto }}
+      {% if observacion_form.texto.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ observacion_form.texto.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+    
+    <div class="flex justify-end mt-4">
+      <!-- Lógica de firma simple iría aquí -->
+      <button type="submit" class="px-6 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
+        Guardar Observación
+      </button>
+    </div>
+  </form>
+
+  <!-- Historial de Observaciones -->
+  <div class="bg-white p-6 shadow-md rounded-lg">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Historial de Observaciones</h2>
+    <div class="space-y-6">
+      {% for obs in observaciones %}
+        <div class="border-b border-gray-200 pb-4">
+          <p class="text-sm text-gray-800">{{ obs.texto }}</p>
+          <div class="flex justify-between items-center mt-2">
+            <span class="text-xs text-gray-500">
+              Por: <strong class="font-medium">{{ obs.autor.username|default:"Sistema" }}</strong>
+              el {{ obs.fecha|date:"d/m/Y \a \l\a\s H:i" }}
+            </span>
+            {% if obs.firma_simple %}
+              <span class="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800">
+                Firmado
+              </span>
+            {% else %}
+              <span class="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                Sin Firmar
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-gray-500 text-sm">No hay observaciones registradas para este RN.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
