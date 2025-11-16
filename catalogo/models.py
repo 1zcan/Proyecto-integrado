@@ -10,6 +10,7 @@ class Catalogo(models.Model):
     # Estos TIPO_CHOICES vienen de tu archivo "Catalogos.csv"
     TIPO_CHOICES = [
         ('VAL_TIPO_PARTO', 'Tipo de Parto'),
+        ('VAL_ESTABLECIMIENTO', 'Establecimientos de Salud'),
         ('VAL_SEXO_RN', 'Sexo Recién Nacido'),
         ('VAL_CONSULTORIO', 'Consultorios'),
         ('VAL_REANIMACION', 'Reanimación RN'),

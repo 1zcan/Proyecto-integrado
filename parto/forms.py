@@ -20,7 +20,26 @@ class PartoForm(forms.ModelForm):
             'piel_piel_madre_30min', 
             'piel_piel_acomp_30min'
         ]
-        # Aquí se agregarían widgets para selects, datepickers, etc.
+
+        widgets = {
+            'fecha': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control'
+                }
+            ),
+            'hora': forms.TimeInput(
+                attrs={
+                    'type': 'time',
+                    'class': 'form-control'
+                }
+            ),
+            'madre': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_parto': forms.Select(attrs={'class': 'form-select'}),
+            'edad_gestacional_semanas': forms.NumberInput(attrs={'class': 'form-control'}),
+            'establecimiento': forms.Select(attrs={'class': 'form-select'}),
+        }
+
 
 class ModeloAtencionForm(forms.ModelForm):
     """
@@ -35,6 +54,7 @@ class ModeloAtencionForm(forms.ModelForm):
             'posicion_expulsivo'
         ]
 
+
 class RobsonForm(forms.ModelForm):
     """
     Formulario para la Clasificación Robson [cite: 42, 210]
@@ -43,13 +63,13 @@ class RobsonForm(forms.ModelForm):
         model = RobsonParto
         fields = ['grupo', 'cesarea_electiva', 'cesarea_urgencia']
 
+
 class PartoObservacionForm(forms.ModelForm):
     """
     Formulario para añadir observaciones firmadas [cite: 42, 216]
     """
-    # Campo para la firma simple (ej. clave de firma)
     clave_firma = forms.CharField(widget=forms.PasswordInput, required=True)
 
     class Meta:
         model = PartoObservacion
-        fields = ['texto'] # 'autor' y 'parto' se asignan en la vista
+        fields = ['texto']  # 'autor' y 'parto' se asignan en la vista

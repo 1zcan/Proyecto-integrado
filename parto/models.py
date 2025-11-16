@@ -2,15 +2,28 @@
 from django.db import models
 from madre.models import Madre
 from django.contrib.auth.models import User   # ✔️ reemplazo correcto
+from catalogo.models import Catalogo
 
 
 class Parto(models.Model):
     madre = models.ForeignKey(Madre, on_delete=models.PROTECT, related_name="partos")
     fecha = models.DateField()
     hora = models.TimeField()
-    tipo_parto = models.CharField(max_length=100)
+    tipo_parto = models.ForeignKey(
+        Catalogo,
+        on_delete=models.PROTECT,
+        related_name="partos",
+        limit_choices_to={'tipo': 'VAL_TIPO_PARTO'},  # Solo cargará tipos de parto
+        verbose_name="Tipo de Parto"
+    )
     edad_gestacional_semanas = models.IntegerField()
-    establecimiento = models.CharField(max_length=100)
+    establecimiento = models.ForeignKey(
+        Catalogo,
+        on_delete=models.PROTECT,
+        related_name="partos_establecimiento",
+        limit_choices_to={'tipo': 'VAL_ESTABLECIMIENTO'},
+        verbose_name="Establecimiento"
+    )
 
     acompanamiento_trabajo_parto = models.BooleanField(default=False)
     acompanamiento_solo_expulsivo = models.BooleanField(default=False)

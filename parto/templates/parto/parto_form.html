@@ -1,94 +1,116 @@
 {% extends "base.html" %}
+{% load form_filters %}
 
 {% block title %}Registro de Parto{% endblock %}
 
 {% block content %}
-<h2>Registro Clínico del Parto</h2>
-<p class="text-muted">Ingreso de datos clínicos del parto e indicadores H2/H3.</p>
 
-<form method="post" class="mt-4">
-    {% csrf_token %}
-    
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-            
-            <div class="row g-4">
+<div class="container mt-4">
 
-                <div class="col-md-6">
-                    <h4 class="h5">Datos del Parto</h4>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.madre.id_for_label }}" class="form-label">Madre (Paciente)</label>
-                        {{ form.madre }}
-                        </div>
-
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label for="{{ form.fecha.id_for_label }}" class="form-label">Fecha de Parto</label>
-                            {{ form.fecha }}
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label for="{{ form.hora.id_for_label }}" class="form-label">Hora de Parto</label>
-                            {{ form.hora }}
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.tipo_parto.id_for_label }}" class="form-label">Tipo de Parto</label>
-                        {{ form.tipo_parto }}
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label for="{{ form.edad_gestacional_semanas.id_for_label }}" class="form-label">EG (Semanas)</label>
-                            {{ form.edad_gestacional_semanas }}
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label for="{{ form.establecimiento.id_for_label }}" class="form-label">Establecimiento</label>
-                            {{ form.establecimiento }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <h4 class="h5">Indicadores H2 / H3</h4>
-                    
-                    <div class="form-check mb-2">
-                        {{ form.acompanamiento_trabajo_parto }}
-                        <label class="form-check-label" for="{{ form.acompanamiento_trabajo_parto.id_for_label }}">
-                            Acompañamiento en trabajo de parto
-                        </label>
-                    </div>
-                    
-                    <div class="form-check mb-2">
-                        {{ form.acompanamiento_solo_expulsivo }}
-                        <label class="form-check-label" for="{{ form.acompanamiento_solo_expulsivo.id_for_label }}">
-                            Acompañamiento solo en expulsivo
-                        </label>
-                    </div>
-
-                    <div class="form-check mb-2">
-                        {{ form.piel_piel_madre_30min }}
-                        <label class="form-check-label" for="{{ form.piel_piel_madre_30min.id_for_label }}">
-                            Contacto piel con piel madre (30 min)
-                        </label>
-                    </div>
-
-                    <div class="form-check mb-2">
-                        {{ form.piel_piel_acomp_30min }}
-                        <label class="form-check-label" for="{{ form.piel_piel_acomp_30min.id_for_label }}">
-                            Contacto piel con piel acompañante (30 min)
-                        </label>
-                    </div>
-                </div>
-            </div> </div> </div> <div class="mt-4">
-        <button type="submit" class="btn btn-primary px-4">
-            <i class="bi bi-check-lg"></i> Guardar Parto
-        </button>
-        <a href="{% url 'madre_lista' %}" class="btn btn-secondary px-4">
-            <i class="bi bi-x"></i> Cancelar
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">Registro Clínico del Parto</h3>
+            <p class="text-muted small mb-0">Ingreso de datos clínicos del parto e indicadores H2/H3.</p>
+        </div>
     </div>
 
-</form>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+
+        <div class="card shadow-sm border-0" style="border-radius: 8px;">
+            <div class="card-body p-4">
+
+                <div class="row g-4">
+
+                    <!-- DATOS DEL PARTO -->
+                    <div class="col-md-6">
+                        <h5 class="fw-bold border-bottom pb-2">Datos del Parto</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.madre.id_for_label }}">Madre (Paciente)</label>
+                            {{ form.madre|add_class:"form-select" }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="{{ form.fecha.id_for_label }}">Fecha de Parto</label>
+                                {{ form.fecha|add_class:"form-control" }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="{{ form.hora.id_for_label }}">Hora de Parto</label>
+                                {{ form.hora|add_class:"form-control" }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.tipo_parto.id_for_label }}">Tipo de Parto</label>
+                            {{ form.tipo_parto|add_class:"form-select" }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="{{ form.edad_gestacional_semanas.id_for_label }}">
+                                    EG (Semanas)
+                                </label>
+                                {{ form.edad_gestacional_semanas|add_class:"form-control" }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="{{ form.establecimiento.id_for_label }}">Establecimiento</label>
+                                {{ form.establecimiento|add_class:"form-select" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INDICADORES -->
+                    <div class="col-md-6">
+                        <h5 class="fw-bold border-bottom pb-2">Indicadores H2 / H3</h5>
+
+                        <div class="form-check mb-2">
+                            {{ form.acompanamiento_trabajo_parto|add_class:"form-check-input" }}
+                            <label class="form-check-label ms-1" for="{{ form.acompanamiento_trabajo_parto.id_for_label }}">
+                                Acompañamiento en trabajo de parto
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            {{ form.acompanamiento_solo_expulsivo|add_class:"form-check-input" }}
+                            <label class="form-check-label ms-1" for="{{ form.acompanamiento_solo_expulsivo.id_for_label }}">
+                                Acompañamiento solo en expulsivo
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            {{ form.piel_piel_madre_30min|add_class:"form-check-input" }}
+                            <label class="form-check-label ms-1" for="{{ form.piel_piel_madre_30min.id_for_label }}">
+                                Contacto piel con piel madre (30 min)
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            {{ form.piel_piel_acomp_30min|add_class:"form-check-input" }}
+                            <label class="form-check-label ms-1" for="{{ form.piel_piel_acomp_30min.id_for_label }}">
+                                Contacto piel con piel acompañante (30 min)
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg"></i> Guardar Parto
+            </button>
+
+            <a href="{% url 'madre_lista' %}" class="btn btn-secondary px-4">
+                <i class="bi bi-x-lg"></i> Cancelar
+            </a>
+        </div>
+
+    </form>
+
+</div>
+
 {% endblock %}
