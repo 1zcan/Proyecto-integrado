@@ -6,6 +6,7 @@ tzdata
 
 # Database
 PyMySQL
+mysqlclient
 
 # Configuration
 python-decouple
