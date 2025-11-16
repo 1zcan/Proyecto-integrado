@@ -1,5 +1,5 @@
 # parto/views.py
-from django.views.generic import ListView, CreateView, UpdateView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
@@ -7,9 +7,6 @@ from catalogo.models import Catalogo
 
 
 class PartoListView(ListView):
-    """
-    Vista para listar partos 
-    """
     model = Parto
     template_name = "parto/parto_lista.html"
     context_object_name = "partos"
@@ -32,42 +29,33 @@ class PartoListView(ListView):
         # Filtro por tipo de parto
         tipo = request.get("filtro_tipo")
         if tipo:
-            qs = qs.filter(tipo_parto_id=tipo)  # si es FK a Catalogo
-            # qs = qs.filter(tipo_parto=tipo)   # si es CharField
+            qs = qs.filter(tipo_parto_id=tipo)
 
         # Filtro por establecimiento
         establecimiento = request.get("filtro_establecimiento")
         if establecimiento:
-            qs = qs.filter(establecimiento_id=establecimiento)  # si es FK a Catalogo
-            # qs = qs.filter(establecimiento=establecimiento)   # si es CharField
+            qs = qs.filter(establecimiento_id=establecimiento)
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # --- Opciones desde Catálogo ---
         context["tipos_parto"] = Catalogo.objects.filter(
             tipo="VAL_TIPO_PARTO", activo=True
         ).order_by("valor")
-
         context["establecimientos"] = Catalogo.objects.filter(
             tipo="VAL_ESTABLECIMIENTO", activo=True
         ).order_by("valor")
 
-        # Mantener selección del usuario en los filtros
+        # Mantener selección del usuario
         context["selected_tipo"] = self.request.GET.get("filtro_tipo", "")
         context["selected_establecimiento"] = self.request.GET.get("filtro_establecimiento", "")
         context["selected_fecha_inicio"] = self.request.GET.get("filtro_fecha_inicio", "")
         context["selected_fecha_fin"] = self.request.GET.get("filtro_fecha_fin", "")
-
         return context
 
 
 class PartoCreateUpdateView(UpdateView):
-    """
-    Vista para crear y actualizar el registro del parto 
-    """
     model = Parto
     form_class = PartoForm
     template_name = "parto/parto_form.html"
@@ -75,9 +63,6 @@ class PartoCreateUpdateView(UpdateView):
 
 
 class ModeloAtencionUpdateView(UpdateView):
-    """
-    Vista para actualizar el Modelo de Atención (REM A21) 
-    """
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
     template_name = "parto/parto_modelo_atencion.html"
@@ -93,9 +78,6 @@ class ModeloAtencionUpdateView(UpdateView):
 
 
 class RobsonUpdateView(UpdateView):
-    """
-    Vista para actualizar la Clasificación Robson 
-    """
     model = RobsonParto
     form_class = RobsonForm
     template_name = "parto/parto_robson.html"
@@ -111,18 +93,27 @@ class RobsonUpdateView(UpdateView):
 
 
 class PartoObservacionesView(CreateView):
-    """
-    Vista para gestionar observaciones del parto 
-    """
     model = PartoObservacion
     form_class = PartoObservacionForm
     template_name = "parto/parto_observaciones.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Trae el objeto Parto para la plantilla
+        parto_pk = self.kwargs.get('parto_pk')
+        context['parto'] = Parto.objects.get(pk=parto_pk)
+        return context
+
     def form_valid(self, form):
+        # Asigna automáticamente autor, parto y firma
         form.instance.autor = self.request.user
         form.instance.parto = Parto.objects.get(pk=self.kwargs['parto_pk'])
         form.instance.firma_simple = True
         return super().form_valid(form)
+
+    def get_success_url(self):
+        # Redirige a la misma página de observaciones del parto
+        return reverse('parto_observaciones', kwargs={'parto_pk': self.kwargs['parto_pk']})
 
 
 class PartoCreateView(CreateView):

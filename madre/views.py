@@ -32,16 +32,11 @@ class MadreListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Import local para evitar dependencia circular en nivel módulo
         from catalogo.models import Catalogo
 
-        # Lista de comunas (tipo definido en tu TIPO_CHOICES)
         context["comunas"] = Catalogo.objects.filter(tipo="VAL_COMUNA", activo=True).order_by("valor")
-
-        # Lista de establecimientos CESFAM / Hospitales (tipo correcto)
         context["cesfams"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
 
-        # Mantener lo seleccionado en el formulario
         context["selected_comuna"] = self.request.GET.get("comuna", "")
         context["selected_cesfam"] = self.request.GET.get("cesfam", "")
 
@@ -99,7 +94,15 @@ class MadreObservacionesView(CreateView):
         form.instance.firma_simple = True
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
+        context['madre'] = madre
+        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones
+        return context
+
     def get_success_url(self):
+        # Redirige a la misma página de observaciones para mostrar la nueva
         return reverse_lazy(
             'madre_observaciones',
             kwargs={'madre_pk': self.kwargs['madre_pk']}
