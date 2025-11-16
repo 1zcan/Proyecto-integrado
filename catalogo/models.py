@@ -24,6 +24,7 @@ class Catalogo(models.Model):
         ('VAL_VACUNA', 'Vacunas'),
         ('VAL_ROBSON_GRUPO', 'Grupos de Robson'),
         ('VAL_PROFILAXIS_RN', 'Profilaxis Recién Nacido'),
+        ('VAL_COMUNA', 'Comuna'),
     ]
 
     tipo = models.CharField(

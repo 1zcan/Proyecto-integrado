@@ -1,20 +1,34 @@
 # madre/models.py
 from django.db import models
-from django.contrib.auth.models import User   # ✔️ corregido
+from django.contrib.auth.models import User
+from catalogo.models import Catalogo   # <--- NECESARIO PARA OPCIÓN B
 
 
 class Madre(models.Model):
     rut = models.CharField(max_length=12, unique=True)
     nombre_completo = models.CharField(max_length=255)
     fecha_nacimiento = models.DateField()
-    
-    comuna = models.CharField(max_length=100)
-    cesfam = models.CharField(max_length=100)
+
+    # 🔥 OPCIÓN B: Relaciones al catálogo
+    comuna = models.ForeignKey(
+        Catalogo,
+        on_delete=models.PROTECT,
+        limit_choices_to={'tipo': 'VAL_COMUNA'},
+        related_name='madres_comuna'
+    )
+
+    cesfam = models.ForeignKey(
+        Catalogo,
+        on_delete=models.PROTECT,
+        limit_choices_to={'tipo': 'VAL_ESTABLECIMIENTO'},
+        related_name='madres_cesfam'
+    )
+
     migrante = models.BooleanField(default=False)
     pueblo_originario = models.BooleanField(default=False)
     discapacidad = models.BooleanField(default=False)
 
-    documentos = models.JSONField(null=True, blank=True, default=dict)
+    documentos = models.FileField(upload_to="documentos_madre/", blank=True, null=True)
 
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
@@ -49,7 +63,7 @@ class TamizajeMaterno(models.Model):
 
 class MadreObservacion(models.Model):
     madre = models.ForeignKey(Madre, on_delete=models.CASCADE, related_name="observaciones")
-    autor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="obs_madre")  # ✔️ corregido
+    autor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="obs_madre")
     texto = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     firma_simple = models.BooleanField(default=False)

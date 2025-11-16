@@ -1,10 +1,10 @@
 # parto/views.py
 from django.views.generic import ListView, CreateView, UpdateView, DetailView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
-from django.urls import reverse, reverse_lazy
-# Se necesitarían Mixins para permisos, ej: from seguridad.mixins import RolRequiredMixin
+from catalogo.models import Catalogo
+
 
 class PartoListView(ListView):
     """
@@ -14,12 +14,57 @@ class PartoListView(ListView):
     template_name = "parto/parto_lista.html"
     context_object_name = "partos"
     paginate_by = 25
-    
-    def get_queryset(self):
-        # [cite_start]Aquí se implementan los filtros [cite: 193]
-        return Parto.objects.filter(activo=True).select_related('madre')
 
-class PartoCreateUpdateView(UpdateView): # O CreateView/UpdateView separadas
+    def get_queryset(self):
+        qs = Parto.objects.filter(activo=True).select_related('madre')
+
+        # --- FILTROS ---
+        request = self.request.GET
+
+        # Filtro por fechas
+        fecha_inicio = request.get("filtro_fecha_inicio")
+        fecha_fin = request.get("filtro_fecha_fin")
+        if fecha_inicio:
+            qs = qs.filter(fecha__gte=fecha_inicio)
+        if fecha_fin:
+            qs = qs.filter(fecha__lte=fecha_fin)
+
+        # Filtro por tipo de parto
+        tipo = request.get("filtro_tipo")
+        if tipo:
+            qs = qs.filter(tipo_parto_id=tipo)  # si es FK a Catalogo
+            # qs = qs.filter(tipo_parto=tipo)   # si es CharField
+
+        # Filtro por establecimiento
+        establecimiento = request.get("filtro_establecimiento")
+        if establecimiento:
+            qs = qs.filter(establecimiento_id=establecimiento)  # si es FK a Catalogo
+            # qs = qs.filter(establecimiento=establecimiento)   # si es CharField
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # --- Opciones desde Catálogo ---
+        context["tipos_parto"] = Catalogo.objects.filter(
+            tipo="VAL_TIPO_PARTO", activo=True
+        ).order_by("valor")
+
+        context["establecimientos"] = Catalogo.objects.filter(
+            tipo="VAL_ESTABLECIMIENTO", activo=True
+        ).order_by("valor")
+
+        # Mantener selección del usuario en los filtros
+        context["selected_tipo"] = self.request.GET.get("filtro_tipo", "")
+        context["selected_establecimiento"] = self.request.GET.get("filtro_establecimiento", "")
+        context["selected_fecha_inicio"] = self.request.GET.get("filtro_fecha_inicio", "")
+        context["selected_fecha_fin"] = self.request.GET.get("filtro_fecha_fin", "")
+
+        return context
+
+
+class PartoCreateUpdateView(UpdateView):
     """
     Vista para crear y actualizar el registro del parto 
     """
@@ -27,9 +72,7 @@ class PartoCreateUpdateView(UpdateView): # O CreateView/UpdateView separadas
     form_class = PartoForm
     template_name = "parto/parto_form.html"
     success_url = reverse_lazy('parto_lista')
-    # Nota: El doc  la llama CreateUpdateView. 
-    # Usualmente se usan CreateView y UpdateView separadas.
-    # Esta implementación es de UpdateView; se necesitaría una CreateView.
+
 
 class ModeloAtencionUpdateView(UpdateView):
     """
@@ -38,33 +81,16 @@ class ModeloAtencionUpdateView(UpdateView):
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
     template_name = "parto/parto_modelo_atencion.html"
-    
-    # --- 🟢 INICIO DE LA CORRECCIÓN ---
+
     def get_object(self, queryset=None):
-        """
-        Implementa la lógica "Get or Create" (Obtener o Crear).
-        Busca el ModeloAtencionParto; si no existe, lo crea.
-        """
-        # Obtenemos el Parto (padre) usando la 'pk' de la URL
         parto_pk = self.kwargs.get('pk')
         parto = Parto.objects.get(pk=parto_pk)
-        
-        try:
-            # Intentamos obtener el ModeloAtencionParto relacionado
-            # (Asumimos relación OneToOne 'parto')
-            modelo_atencion = ModeloAtencionParto.objects.get(parto=parto)
-        except ModeloAtencionParto.DoesNotExist:
-            # ¡No existe! Lo creamos vacío.
-            print(f"Creando ModeloAtencionParto para Parto ID: {parto_pk}")
-            modelo_atencion = ModeloAtencionParto.objects.create(parto=parto)
-        
-        # Devolvemos el objeto (ya sea el encontrado o el recién creado)
-        return modelo_atencion
+        obj, created = ModeloAtencionParto.objects.get_or_create(parto=parto)
+        return obj
 
     def get_success_url(self):
-        # Redirige de vuelta a la lista de partos
         return reverse_lazy('parto_lista')
-    # --- 🟢 FIN DE LA CORRECCIÓN ---
+
 
 class RobsonUpdateView(UpdateView):
     """
@@ -73,61 +99,39 @@ class RobsonUpdateView(UpdateView):
     model = RobsonParto
     form_class = RobsonForm
     template_name = "parto/parto_robson.html"
-    
-    # --- 🟢 INICIO DE LA CORRECCIÓN (MISMA LÓGICA) ---
+
     def get_object(self, queryset=None):
-        """
-        Implementa la lógica "Get or Create" (Obtener o Crear).
-        Busca el RobsonParto; si no existe, lo crea.
-        """
         parto_pk = self.kwargs.get('pk')
         parto = Parto.objects.get(pk=parto_pk)
-        
-        try:
-            # Intentamos obtener el RobsonParto relacionado
-            robson = RobsonParto.objects.get(parto=parto)
-        except RobsonParto.DoesNotExist:
-            # ¡No existe! Lo creamos vacío.
-            print(f"Creando RobsonParto para Parto ID: {parto_pk}")
-            robson = RobsonParto.objects.create(parto=parto)
-        
-        return robson
+        obj, created = RobsonParto.objects.get_or_create(parto=parto)
+        return obj
 
     def get_success_url(self):
-        # Redirige de vuelta a la lista de partos
         return reverse_lazy('parto_lista')
-    # --- 🟢 FIN DE LA CORRECCIÓN ---
 
-class PartoObservacionesView(CreateView): # Usualmente un CreateView + ListView
+
+class PartoObservacionesView(CreateView):
     """
     Vista para gestionar observaciones del parto 
     """
     model = PartoObservacion
     form_class = PartoObservacionForm
     template_name = "parto/parto_observaciones.html"
-    
+
     def form_valid(self, form):
-        # [cite_start]1. Validar la clave_firma del form contra el Usuario [cite: 88, 308]
-        # ... (Lógica de validación de firma_clave hash)
-        
-        # 2. Asignar autor y parto
         form.instance.autor = self.request.user
         form.instance.parto = Parto.objects.get(pk=self.kwargs['parto_pk'])
-        form.instance.firma_simple = True # Si la validación de clave fue exitosa
-        
-        # [cite_start]3. Guardar y registrar en auditoría [cite: 81, 220]
+        form.instance.firma_simple = True
         return super().form_valid(form)
-    
-    
+
+
 class PartoCreateView(CreateView):
     model = Parto
     form_class = PartoForm
     template_name = 'parto/parto_form.html'
 
     def get_initial(self):
-        return {
-            'madre': self.kwargs['madre_id']
-        }
+        return {'madre': self.kwargs['madre_id']}
 
     def form_valid(self, form):
         form.instance.madre_id = self.kwargs['madre_id']

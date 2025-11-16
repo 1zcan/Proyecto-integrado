@@ -21,24 +21,45 @@
     </div>
 </div>
 
+<!-- ============================
+        FILTROS
+=============================== -->
+
 <div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-center">
             
+            <!-- FILTRO COMUNA -->
             <div class="col-md-5">
                 <label for="filtro_comuna" class="form-label visually-hidden">Comuna</label>
-                <select name="filtro_comuna" id="filtro_comuna" class="form-select">
+                <select name="comuna" id="filtro_comuna" class="form-select">
                     <option value="">Todas las Comunas</option>
-                    </select>
+
+                    {% for c in comunas %}
+                        <option value="{{ c.id }}" 
+                            {% if c.id|stringformat:"s" == selected_comuna %}selected{% endif %}>
+                            {{ c.valor }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
+            <!-- FILTRO CESFAM -->
             <div class="col-md-5">
                 <label for="filtro_cesfam" class="form-label visually-hidden">CESFAM</label>
-                <select name="filtro_cesfam" id="filtro_cesfam" class="form-select">
+                <select name="cesfam" id="filtro_cesfam" class="form-select">
                     <option value="">Todos los CESFAM</option>
-                    </select>
+
+                    {% for ce in cesfams %}
+                        <option value="{{ ce.id }}" 
+                            {% if ce.id|stringformat:"s" == selected_cesfam %}selected{% endif %}>
+                            {{ ce.valor }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
+            <!-- BOTÓN FILTRAR -->
             <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100">
                     <i class="bi bi-search"></i> Filtrar
@@ -48,6 +69,10 @@
         </form>
     </div>
 </div>
+
+<!-- ============================
+        TABLA LISTADO
+=============================== -->
 
 <div class="card shadow-sm border-0" style="border-radius: 8px; overflow: hidden;">
     <div class="card-body p-0">
@@ -63,14 +88,21 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for madre in madres %}
                 <tr>
                     <td class="text-nowrap">{{ madre.rut }}</td>
                     <td class="fw-medium">{{ madre.nombre_completo }}</td>
                     <td class="text-nowrap">{{ madre.fecha_nacimiento|date:"d-m-Y" }}</td>
-                    <td>{{ madre.comuna|default:"-" }}</td>
-                    <td>{{ madre.cesfam|default:"-" }}</td>
+
+                    <td>
+                        {{ madre.comuna.valor|default:"-" }}
+                    </td>
+
+                    <td>
+                        {{ madre.cesfam.valor|default:"-" }}
+                    </td>
                     
                     <td>
                         {% if madre.migrante %}
@@ -130,7 +162,6 @@
     }
     
     .btn-sm i {
-      
         margin-right: 3px;
     }
 </style>
