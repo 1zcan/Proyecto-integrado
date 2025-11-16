@@ -16,7 +16,7 @@ class PartoListView(ListView):
     paginate_by = 25
     
     def get_queryset(self):
-        # Aquí se implementan los filtros [cite: 193]
+        # [cite_start]Aquí se implementan los filtros [cite: 193]
         return Parto.objects.filter(activo=True).select_related('madre')
 
 class PartoCreateUpdateView(UpdateView): # O CreateView/UpdateView separadas
@@ -27,7 +27,7 @@ class PartoCreateUpdateView(UpdateView): # O CreateView/UpdateView separadas
     form_class = PartoForm
     template_name = "parto/parto_form.html"
     success_url = reverse_lazy('parto_lista')
-    # Nota: El doc  la llama CreateUpdateView. 
+    # Nota: El doc  la llama CreateUpdateView. 
     # Usualmente se usan CreateView y UpdateView separadas.
     # Esta implementación es de UpdateView; se necesitaría una CreateView.
 
@@ -38,7 +38,33 @@ class ModeloAtencionUpdateView(UpdateView):
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
     template_name = "parto/parto_modelo_atencion.html"
-    # El success_url debería redirigir de vuelta al detalle del parto
+    
+    # --- 🟢 INICIO DE LA CORRECCIÓN ---
+    def get_object(self, queryset=None):
+        """
+        Implementa la lógica "Get or Create" (Obtener o Crear).
+        Busca el ModeloAtencionParto; si no existe, lo crea.
+        """
+        # Obtenemos el Parto (padre) usando la 'pk' de la URL
+        parto_pk = self.kwargs.get('pk')
+        parto = Parto.objects.get(pk=parto_pk)
+        
+        try:
+            # Intentamos obtener el ModeloAtencionParto relacionado
+            # (Asumimos relación OneToOne 'parto')
+            modelo_atencion = ModeloAtencionParto.objects.get(parto=parto)
+        except ModeloAtencionParto.DoesNotExist:
+            # ¡No existe! Lo creamos vacío.
+            print(f"Creando ModeloAtencionParto para Parto ID: {parto_pk}")
+            modelo_atencion = ModeloAtencionParto.objects.create(parto=parto)
+        
+        # Devolvemos el objeto (ya sea el encontrado o el recién creado)
+        return modelo_atencion
+
+    def get_success_url(self):
+        # Redirige de vuelta a la lista de partos
+        return reverse_lazy('parto_lista')
+    # --- 🟢 FIN DE LA CORRECCIÓN ---
 
 class RobsonUpdateView(UpdateView):
     """
@@ -47,7 +73,30 @@ class RobsonUpdateView(UpdateView):
     model = RobsonParto
     form_class = RobsonForm
     template_name = "parto/parto_robson.html"
-    # El success_url debería redirigir de vuelta al detalle del parto
+    
+    # --- 🟢 INICIO DE LA CORRECCIÓN (MISMA LÓGICA) ---
+    def get_object(self, queryset=None):
+        """
+        Implementa la lógica "Get or Create" (Obtener o Crear).
+        Busca el RobsonParto; si no existe, lo crea.
+        """
+        parto_pk = self.kwargs.get('pk')
+        parto = Parto.objects.get(pk=parto_pk)
+        
+        try:
+            # Intentamos obtener el RobsonParto relacionado
+            robson = RobsonParto.objects.get(parto=parto)
+        except RobsonParto.DoesNotExist:
+            # ¡No existe! Lo creamos vacío.
+            print(f"Creando RobsonParto para Parto ID: {parto_pk}")
+            robson = RobsonParto.objects.create(parto=parto)
+        
+        return robson
+
+    def get_success_url(self):
+        # Redirige de vuelta a la lista de partos
+        return reverse_lazy('parto_lista')
+    # --- 🟢 FIN DE LA CORRECCIÓN ---
 
 class PartoObservacionesView(CreateView): # Usualmente un CreateView + ListView
     """
@@ -58,7 +107,7 @@ class PartoObservacionesView(CreateView): # Usualmente un CreateView + ListView
     template_name = "parto/parto_observaciones.html"
     
     def form_valid(self, form):
-        # 1. Validar la clave_firma del form contra el Usuario [cite: 88, 308]
+        # [cite_start]1. Validar la clave_firma del form contra el Usuario [cite: 88, 308]
         # ... (Lógica de validación de firma_clave hash)
         
         # 2. Asignar autor y parto
@@ -66,7 +115,7 @@ class PartoObservacionesView(CreateView): # Usualmente un CreateView + ListView
         form.instance.parto = Parto.objects.get(pk=self.kwargs['parto_pk'])
         form.instance.firma_simple = True # Si la validación de clave fue exitosa
         
-        # 3. Guardar y registrar en auditoría [cite: 81, 220]
+        # [cite_start]3. Guardar y registrar en auditoría [cite: 81, 220]
         return super().form_valid(form)
     
     

@@ -1,10 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Reportes REM (A11, A21, A24){% endblock %}
+{% block title %}
+    {% if vista_elegida == 'A11' %}
+        Reporte REM A11 (Madre)
+    {% elif vista_elegida == 'A21' %}
+        Reporte REM A21 (Parto)
+    {% elif vista_elegida == 'A24' %}
+        Reporte REM A24 (Recién Nacido)
+    {% else %}
+        Reportes REM (A11, A21, A24)
+    {% endif %}
+{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Reportes REM (A11, A21, A24)</h2>
-<p class="text-muted mb-4">Consolidado de indicadores REM para el período seleccionado.</p>
+
+{% if vista_elegida == 'A11' %}
+    <h2 class="mb-3">Reporte REM A11 (Madre)</h2>
+    <p class="text-muted mb-4">Detalle de indicadores de Tamizajes (A11) para el período seleccionado.</p>
+{% elif vista_elegida == 'A21' %}
+    <h2 class="mb-3">Reporte REM A21 (Parto)</h2>
+    <p class="text-muted mb-4">Detalle de indicadores de Parto y Robson (A21) para el período seleccionado.</p>
+{% elif vista_elegida == 'A24' %}
+    <h2 class="mb-3">Reporte REM A24 (Recién Nacido)</h2>
+    <p class="text-muted mb-4">Detalle de indicadores de Recién Nacido (A24) para el período seleccionado.</p>
+{% else %} <h2 class="mb-3">Reportes REM (A11, A21, A24)</h2>
+    <p class="text-muted mb-4">Consolidado de indicadores REM para el período seleccionado.</p>
+{% endif %}
+
 
 <div class="card shadow-sm border-0 mb-4 rem-form">
     <div class="card-body">
@@ -18,7 +40,11 @@
                     <label for="{{ form.mes.id_for_label }}" class="form-label">Mes</label>
                     {{ form.mes }}
                 </div>
-                <div class="col-md-6 d-flex flex-wrap gap-2">
+                <div class="col-md-3">
+                    <label for="{{ form.vista.id_for_label }}" class="form-label">Vista</label>
+                    {{ form.vista }}
+                </div>
+                <div class="col-md-3 d-flex flex-wrap gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-filter"></i> Filtrar
                     </button>
@@ -37,10 +63,38 @@
 {% if datos %}
     <div class="card shadow-sm border-0 rem-results">
         <div class="card-header bg-white py-3">
-            <h5 class="mb-0">Resultados para {{ datos.periodo }}</h5>
+            <h5 class="mb-0">
+                {% if vista_elegida == 'A11' %}
+                    Resultados REM A11 para {{ datos.periodo }}
+                {% elif vista_elegida == 'A21' %}
+                    Resultados REM A21 para {{ datos.periodo }}
+                {% elif vista_elegida == 'A24' %}
+                    Resultados REM A24 para {{ datos.periodo }}
+                {% else %}
+                    Resultados Consolidados para {{ datos.periodo }}
+                {% endif %}
+            </h5>
         </div>
         <div class="card-body p-4">
 
+            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A11' %}
+            <div class="mb-4">
+                <h3 class="h5 section-title">REM A11 - Tamizajes Madre</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <tbody>
+                            <tr>
+                                <td>Tamizajes VIH Positivos</td>
+                                <td><strong>{{ datos.rem_a11.tamizajes_vih_positivos }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+
+            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A21' %}
             <div class="mb-4">
                 <h3 class="h5 section-title">REM A21 - Modelo Atención Parto</h3>
                 <div class="table-responsive">
@@ -50,19 +104,39 @@
                                 <td>Total Partos</td>
                                 <td><strong>{{ datos.rem_a21.total_partos }}</strong></td>
                             </tr>
+                            
+                            {% for desglose in datos.rem_a21.desglose_partos %}
                             <tr>
-                                <td>Total Cesáreas</td>
-                                <td><strong>{{ datos.rem_a21.total_cesareas }}</strong></td>
+                                <td style="padding-left: 2rem;">↳ {{ desglose.tipo_parto__valor }}</td>
+                                <td><strong>{{ desglose.total }}</strong></td>
                             </tr>
+                            {% endfor %}
+
                             <tr>
+                                <td colspan="2" class="text-muted pt-3" style="font-size: 0.9rem;">Clasificación Robson:</td>
+                            </tr>
+                            {% for desglose in datos.rem_a21.desglose_robson %}
+                            <tr>
+                                <td style="padding-left: 2rem;">↳ Grupo {{ desglose.clasificacion_robson__grupo }}</td>
+                                <td><strong>{{ desglose.total }}</strong></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-muted" style="padding-left: 2rem;">(Sin datos de Robson)</td>
+                            </tr>
+                            {% endfor %}
+                            
+                            <tr class="pt-3">
                                 <td>Partos con Acompañamiento</td>
                                 <td><strong>{{ datos.rem_a21.partos_con_acompanamiento }}</strong></td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
+            {% endif %}
 
+            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A24' %}
             <div>
                 <h3 class="h5 section-title">REM A24 - Atención Recién Nacido</h3>
                 <div class="table-responsive">
@@ -76,12 +150,13 @@
                                 <td>RN con Lactancia (60 min)</td>
                                 <td><strong>{{ datos.rem_a24.rn_con_lm_60min }}</strong></td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
+            {% endif %}
             
-            </div>
+        </div>
     </div>
 
 {% elif request.GET.anio %}

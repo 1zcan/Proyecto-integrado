@@ -1,52 +1,33 @@
-import datetime
+# reportes/forms.py
 from django import forms
 
-# Obtenemos el año actual para los selectores
-CURRENT_YEAR = datetime.date.today().year
-YEAR_CHOICES = [(y, y) for y in range(CURRENT_YEAR - 10, CURRENT_YEAR + 2)]
+# Usamos rangos de años y meses para los filtros
+YEAR_CHOICES = [(y, str(y)) for y in range(2023, 2030)]
+MONTH_CHOICES = [(m, str(m)) for m in range(1, 13)]
+QUARTER_CHOICES = [('1', 'T1'), ('2', 'T2'), ('3', 'T3'), ('4', 'T4')]
 
-MONTH_CHOICES = [
-    (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
-    (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
-    (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
-]
-
-QUARTER_CHOICES = [
-    (1, 'Trimestre 1 (Ene-Mar)'),
-    (2, 'Trimestre 2 (Abr-Jun)'),
-    (3, 'Trimestre 3 (Jul-Sep)'),
-    (4, 'Trimestre 4 (Oct-Dic)'),
-]
-
+# --- Formulario REM (Modificado) ---
 class FiltroReporteREMForm(forms.Form):
-    """
-    Formulario para filtrar los reportes REM por mes y año.
-    """
-    anio = forms.ChoiceField(
-        choices=YEAR_CHOICES,
-        initial=CURRENT_YEAR,
-        label="Año",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    mes = forms.ChoiceField(
-        choices=MONTH_CHOICES,
-        initial=datetime.date.today().month,
-        label="Mes",
-        widget=forms.Select(attrs={'class': 'form-control'})
+    # Opciones para el nuevo filtro de vista
+    CHOICES_VISTA = [
+        ('CONSOLIDADO', 'Reporte Consolidado'),
+        ('A11', 'Solo REM A11 (Madre)'),
+        ('A21', 'Solo REM A21 (Parto)'),
+        ('A24', 'Solo REM A24 (Recién Nacido)'),
+    ]
+
+    anio = forms.ChoiceField(label="Año", choices=YEAR_CHOICES, required=True, initial=2025)
+    mes = forms.ChoiceField(label="Mes", choices=MONTH_CHOICES, required=True, initial=11)
+    
+    # --- 🟢 NUEVO CAMPO AÑADIDO ---
+    vista = forms.ChoiceField(
+        choices=CHOICES_VISTA,
+        required=False, # No es obligatorio
+        initial='CONSOLIDADO', # Por defecto muestra todo
+        label="Tipo de Vista"
     )
 
+# --- Formulario Servicio Salud (Lo creamos basado en tu views.py) ---
 class FiltroReporteServicioSaludForm(forms.Form):
-    """
-    Formulario para filtrar los reportes del Servicio de Salud por trimestre y año.
-    """
-    anio = forms.ChoiceField(
-        choices=YEAR_CHOICES,
-        initial=CURRENT_YEAR,
-        label="Año",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    trimestre = forms.ChoiceField(
-        choices=QUARTER_CHOICES,
-        label="Trimestre",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
+    anio = forms.ChoiceField(label="Año", choices=YEAR_CHOICES, required=True, initial=2025)
+    trimestre = forms.ChoiceField(label="Trimestre", choices=QUARTER_CHOICES, required=True)

@@ -1,9 +1,18 @@
+# reportes/urls.py
 from django.urls import path
 from . import views
 
+# 1. ESTO ES CRUCIAL:
 app_name = 'reportes'
 
 urlpatterns = [
+    # 2. ESTE ES EL NOMBRE QUE BUSCA EL TEMPLATE:
+    path(
+        '',  
+        views.ReportesMenuView.as_view(), 
+        name='reportes_menu'  # <-- 'reportes_menu'
+    ),
+    
     path(
         'rem/', 
         views.ReporteREMView.as_view(), 

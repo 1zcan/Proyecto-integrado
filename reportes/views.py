@@ -1,10 +1,18 @@
+# reportes/views.py
 from django.shortcuts import render
 from django.views.generic.base import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
+# --- 🟢 MODIFICADO: Importamos los forms actualizados ---
 from .forms import FiltroReporteREMForm, FiltroReporteServicioSaludForm
 from . import services
 from . import export
+
+class ReportesMenuView(LoginRequiredMixin, TemplateView):
+    """
+    Vista que muestra el menú de sub-secciones de reportes.
+    """
+    template_name = 'reportes/reportes_menu.html'
 
 class ReporteREMView(LoginRequiredMixin, TemplateView):
     """
@@ -21,7 +29,12 @@ class ReporteREMView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             anio = form.cleaned_data['anio']
             mes = form.cleaned_data['mes']
-            # Llama al servicio para obtener los datos
+            
+            # --- 🟢 (MODIFICACIÓN) ---
+            # Pasamos la vista elegida (ej: 'A11') al template
+            context['vista_elegida'] = form.cleaned_data.get('vista', 'CONSOLIDADO')
+            
+            # El servicio sigue calculando todo igual, no cambia
             context['datos'] = services.get_datos_rem(anio, mes)
         
         return context
@@ -35,8 +48,11 @@ class ReporteREMView(LoginRequiredMixin, TemplateView):
             if form.is_valid():
                 anio = form.cleaned_data['anio']
                 mes = form.cleaned_data['mes']
+                # El servicio sigue calculando todo
                 datos = services.get_datos_rem(anio, mes)
                 
+                # NOTA: La exportación (PDF/Excel) seguirá siendo CONSOLIDADA.
+                # El filtro 'vista' por ahora solo afecta al HTML.
                 if export_format == 'excel':
                     return export.export_rem_excel(datos)
                 elif export_format == 'pdf':

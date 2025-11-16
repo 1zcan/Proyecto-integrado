@@ -16,76 +16,83 @@ try:
     from parto.models import Parto, ModeloAtencionParto, RobsonParto
     from recien_nacido.models import RecienNacido, ProfiRN
     from auditoria.models import LogAccion
+    # Importamos el modelo de Catálogo para la consulta dinámica
+    from catalogo.models import Catalogo
 except ImportError:
     # Si hay un error de importación, usamos un truco para que Django pueda arrancar
     print("ADVERTENCIA: No se pudieron importar modelos de otras apps en reportes/services.py")
     # Usamos un placeholder que fallará si se usa, pero permite que el servidor inicie
-    Madre, TamizajeMaterno, Parto, ModeloAtencionParto, RobsonParto, RecienNacido, ProfiRN, LogAccion = (None,) * 8
+    Madre, TamizajeMaterno, Parto, ModeloAtencionParto, RobsonParto, RecienNacido, ProfiRN, LogAccion, Catalogo = (None,) * 9
 
 
 def get_datos_rem(anio, mes):
     """
     Calcula los agregados para los reportes REM (A11, A21, A24)
     para un año y mes específicos.
+    
+    --- 🟢 IMPLEMENTA LÓGICA DINÁMICA ---
+    Agrupa los partos por tipo automáticamente desde el Catálogo.
     """
     print(f"Calculando REM para {anio}-{mes}")
     
-    # --- Lógica con datos reales ---
-    
-    # 1. Datos de Parto (REM A21, H2/H3)
+    # --- Consultas Base ---
     base_partos_mes = Parto.objects.filter(fecha__year=anio, fecha__month=mes)
-    total_partos = base_partos_mes.count()
-    # (Ajusta 'CESAREA' si el valor guardado en tu modelo es diferente, ej: 'C')
-    total_cesareas = base_partos_mes.filter(tipo_parto='CESAREA').count()
+    base_rn_mes = RecienNacido.objects.filter(parto__fecha__year=anio, parto__fecha__month=mes)
+    madres_con_parto_ids = base_partos_mes.values_list('madre_id', flat=True)
+    base_tamizajes_mes = TamizajeMaterno.objects.filter(madre_id__in=madres_con_parto_ids)
 
+    # === REM A11 (MADRE) ===
+    tamizajes_vih_positivos = base_tamizajes_mes.filter(
+        vih_resultado='POSITIVO'
+    ).count()
+
+    # === REM A21 (PARTO) ===
+    total_partos = base_partos_mes.count()
+
+    # 1. Desglose dinámico de Partos
+    partos_agrupados_por_tipo = base_partos_mes.values(
+        'tipo_parto__valor'  # Agrupa por el texto, ej: 'CESAREA', 'VAGINAL'
+    ).annotate(
+        total=Count('id')    # Cuenta cuántos hay en cada grupo
+    ).order_by('tipo_parto__valor') # Ordena alfabéticamente
+    
     # 2. Datos de Modelo de Atención (REM A21)
-    # (Basado en la guía, estos campos están en el modelo Parto)
     partos_con_acompanamiento = base_partos_mes.filter(
         Q(acompanamiento_trabajo_parto=True) | Q(acompanamiento_solo_expulsivo=True)
     ).count()
+
+    # --- 🟢 INICIO: CÁLCULO ROBSON (CORREGIDO) ---
+    # 3. Clasificación Robson
+    # (Usamos 'clasificacion_robson__grupo' que es el nombre de campo correcto)
+    partos_agrupados_por_robson = base_partos_mes.values(
+        'clasificacion_robson__grupo'
+    ).annotate(
+        total=Count('id')
+    ).order_by('clasificacion_robson__grupo')
+    # --- 🟢 FIN: CÁLCULO ROBSON ---
     
-    # 3. Datos de Recién Nacido (REM A24)
-    base_rn_mes = RecienNacido.objects.filter(parto__fecha__year=anio, parto__fecha__month=mes)
+    # === REM A24 (RECIÉN NACIDO) ===
     total_rn = base_rn_mes.count()
     rn_con_lm_60min = base_rn_mes.filter(lactancia_60min=True).count()
     
-    # 4. Datos de Tamizajes (REM A11)
-    # (Ajusta 'POSITIVO' si el valor guardado es diferente)
-    
-    # --- CORRECCIÓN ---
-    # Evitamos el 'join' inverso (madre__parto) que está fallando.
-    
-    # 1. Obtenemos los IDs de las madres que tuvieron partos en el período.
-    madres_con_parto_ids = base_partos_mes.values_list('madre_id', flat=True)
-    
-    # 2. Filtramos los tamizajes por esos IDs de madres.
-    tamizajes_vih_positivos = TamizajeMaterno.objects.filter(
-        madre_id__in=madres_con_parto_ids, 
-        vih_resultado='POSITIVO'
-    ).count()
 
     # Estructura de datos consolidada para la vista/template
     datos_consolidados = {
         'periodo': f"{mes}-{anio}",
         'rem_a21': {
             'total_partos': total_partos,
-            'total_cesareas': total_cesareas,
-            'total_vaginales': total_partos - total_cesareas,
+            'desglose_partos': list(partos_agrupados_por_tipo),
+            'desglose_robson': list(partos_agrupados_por_robson), # <-- Añadido
             'partos_con_acompanamiento': partos_con_acompanamiento,
-            # ... más indicadores A21 (puedes agregarlos aquí)
         },
         'rem_a24': {
             'total_rn': total_rn,
             'rn_con_lm_60min': rn_con_lm_60min,
-            # ... más indicadores A24 (puedes agregarlos aquí)
         },
         'rem_a11': {
             'tamizajes_vih_positivos': tamizajes_vih_positivos,
-            # ... más indicadores A11 (puedes agregarlos aquí)
         },
         'indicadores_h2_h3': {
-            # El cálculo de Robson es complejo, requiere agrupar
-            # Dejamos en 0 como placeholder
             'h2_parto_vertical': 0, # (cálculo pendiente)
             'h3_cesarea_g1_g10': 0, # (cálculo pendiente)
         }
@@ -98,8 +105,6 @@ def get_datos_servicio_salud(anio, trimestre):
     Calcula los agregados para el reporte del Servicio de Salud Ñuble.
     """
     print(f"Calculando SS Ñuble para {anio}-T{trimestre}")
-    
-    # --- Lógica con datos reales (sin simulación) ---
     
     # Mapeo de meses por trimestre
     if trimestre == '1':
@@ -119,8 +124,6 @@ def get_datos_servicio_salud(anio, trimestre):
     partos_trimestre = Parto.objects.filter(fecha__year=anio, fecha__month__in=meses)
     rn_trimestre = RecienNacido.objects.filter(parto__fecha__year=anio, parto__fecha__month__in=meses)
     
-    # --- CORRECCIÓN ---
-    # Usamos la misma lógica de IDs para evitar el join problemático
     madres_con_parto_ids = partos_trimestre.values_list('madre_id', flat=True)
     madres_parto_trimestre = Madre.objects.filter(id__in=madres_con_parto_ids)
 
@@ -129,7 +132,12 @@ def get_datos_servicio_salud(anio, trimestre):
     
     # 2. Cumplimiento Profilaxis VHB
     total_rn_trimestre = rn_trimestre.count()
-    vhb_completas = ProfiRN.objects.filter(rn__in=rn_trimestre, tipo='VHB').count() # Asumiendo tipo='VHB'
+    
+    vhb_completas = ProfiRN.objects.filter(
+        rn__in=rn_trimestre, 
+        tipo='VHB'
+    ).count()
+    
     cumplimiento_vhb = (vhb_completas / total_rn_trimestre * 100) if total_rn_trimestre > 0 else 0
 
     # 3. Gráfico (ej: partos por mes)
@@ -139,9 +147,6 @@ def get_datos_servicio_salud(anio, trimestre):
         data_grafico.append(partos_del_mes)
     
     # 4. Totales por Edad Materna
-    # (Requiere que Madre tenga 'fecha_nacimiento')
-    # --- CORRECCIÓN ---
-    # Calculamos la edad en la consulta de 'Parto', que es más directa
     partos_con_edad_madre = partos_trimestre.annotate(
         edad_madre=ExtractYear('fecha') - ExtractYear('madre__fecha_nacimiento')
     )
@@ -174,14 +179,11 @@ def get_datos_calidad():
     """
     print("Ejecutando chequeos de calidad...")
     
-    # --- Consultas de calidad reales (sin simulación) ---
     inconsistencias = []
     
     # 1. Madres sin parto asociado
-    # --- CORRECCIÓN ---
-    # Usamos 'exclude' con los IDs de las madres que sí tienen parto
     madres_con_parto_ids = Parto.objects.values_list('madre_id', flat=True)
-    madres_sin_parto = Madre.objects.exclude(id__in=madres_con_parto_ids) # Ajusta este filtro si es necesario
+    madres_sin_parto = Madre.objects.exclude(id__in=madres_con_parto_ids)
     if madres_sin_parto.exists():
         inconsistencias.append({
             'id': 'M-001', 
@@ -190,9 +192,6 @@ def get_datos_calidad():
         })
 
     # 2. Partos sin RN asociado
-    # --- CORRECCIÓN ---
-    # El error nos dice que el campo se llama 'recien_nacidos' (plural),
-    # no 'reciennacido' (singular).
     partos_sin_rn = Parto.objects.filter(recien_nacidos__isnull=True)
     if partos_sin_rn.exists():
         inconsistencias.append({

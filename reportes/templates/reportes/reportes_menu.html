@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Portal de Reportes{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="h2 mb-4">Portal de Reportes</h1>
+    <p class="text-muted">Seleccione el tipo de reporte que desea consultar.</p>
+
+    <div class="row g-4 mt-4">
+        
+        <!-- Tarjeta 1: Reportes REM -->
+        <div class="col-lg-4">
+            <a href="{% url 'reportes:reportes_rem' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body text-center">
+                        <div class="card-icon icon-purple">
+                            <i class="bi bi-file-earmark-bar-graph"></i>
+                        </div>
+                        <h5 class="card-title">Reportes REM (A24/A21/A11)</h5>
+                        <p class="card-text text-muted">Generación de reportes estadísticos ministeriales.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tarjeta 2: Reporte Servicio Salud -->
+        <div class="col-lg-4">
+            <a href="{% url 'reportes:reportes_servicio_salud' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body text-center">
+                        <div class="card-icon icon-blue">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <h5 class="card-title">Reporte Servicio de Salud</h5>
+                        <p class="card-text text-muted">Resumen trimestral con indicadores para el SS Ñuble.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tarjeta 3: Control de Calidad / Validar Alta -->
+        <div class="col-lg-4">
+            <a href="{% url 'reportes:reportes_calidad' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body text-center">
+                        <div class="card-icon icon-green">
+                            <i class="bi bi-database-check"></i>
+                        </div>
+                        <h5 class="card-title">Control de Calidad</h5>
+                        <p class="card-text text-muted">Verificación de inconsistencias y datos pendientes.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- Estilos (los mismos que usas en tu dashboard.html para consistencia) -->
+<style>
+    .card-icon {
+        font-size: 2.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    .icon-purple { color: #6f42c1; background-color: #f1eefe; }
+    .icon-blue { color: #0d6efd; background-color: #e7f0ff; }
+    .icon-green { color: #198754; background-color: #e8f3ee; }
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-link {
+        text-decoration: none;
+        color: inherit;
+    }
+    .card-link:hover .card-title {
+        color: #0d6efd;
+    }
+    .card-title {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
