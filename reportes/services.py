@@ -191,10 +191,9 @@ def get_datos_calidad():
 
     # 2. Partos sin RN asociado
     # --- CORRECCIÓN ---
-    # Asumiendo 'OneToOneField' en Parto, el reverso en Madre es 'parto'
-    # Si 'OneToOneField' está en Madre, el reverso en Parto es 'madre'
-    # 'reciennacido' es el nombre más probable de la relación inversa OneToOne
-    partos_sin_rn = Parto.objects.filter(reciennacido__isnull=True)
+    # El error nos dice que el campo se llama 'recien_nacidos' (plural),
+    # no 'reciennacido' (singular).
+    partos_sin_rn = Parto.objects.filter(recien_nacidos__isnull=True)
     if partos_sin_rn.exists():
         inconsistencias.append({
             'id': 'P-005', 
