@@ -52,6 +52,123 @@
             background-color: #f8f9fa;
             padding: 20px;
         }
+        .navbar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand i {
+            font-size: 1.8rem;
+        }
+
+        .navbar-text {
+            color: white !important;
+            margin-right: 15px;
+        }
+
+        .dropdown-toggle {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 20px;
+            padding: 6px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .dropdown-toggle::after {
+            margin-left: 5px;
+        }
+
+        .dropdown-menu {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 8px 0;
+            min-width: 220px;
+            margin-top: 10px !important;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            font-weight: 500;
+            color: #2d3748 !important;
+            transition: all 0.2s ease;
+            margin: 2px 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: #4f46e5 !important;
+            color: white !important;
+            transform: translateX(5px);
+        }
+
+        .dropdown-divider {
+            margin: 8px 0;
+        }
+
+        /* Estilo específico para el panel de administración */
+        .dropdown-item[href*="admin:index"] {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4f46e5 !important;
+            font-weight: 600;
+        }
+
+        .dropdown-item[href*="admin:index"]:hover {
+            background: #4f46e5 !important;
+            color: white !important;
+        }
+
+        /* Estilo específico para cerrar sesión */
+        .dropdown-item[href*="logout"] {
+            color: #e53e3e !important;
+            font-weight: 600;
+        }
+
+        .dropdown-item[href*="logout"]:hover {
+            background: #e53e3e !important;
+            color: white !important;
+        }
+
+        /* Indicador de usuario autenticado */
+        .user-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            margin-right: 15px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
     </style>
 
     {% block styles %}{% endblock %}
@@ -63,17 +180,50 @@
     <nav class="navbar navbar-expand-lg py-3">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="{% url 'dashboard:dashboard' %}">
-                <i class="bi bi-hospital" style="color: #0d6efd;"></i>
+                <i class="bi bi-hospital"></i>
                 Sistema Perinatal
             </a>
-            <span class="navbar-text">
-                {% if user.is_authenticated %}
-                    Bienvenid@, {{ user.first_name|default:user.username }}
-                    <a href="{% url 'usuarios:logout' %}" class="ms-2 text-secondary" title="Cerrar Sesión">
-                        <i class="bi bi-box-arrow-right"></i>
-                    </a>
-                {% endif %}
-            </span>
+            
+            <div class="d-flex align-items-center">
+                <!-- Indicador de usuario (opcional, puedes eliminarlo si prefieres) -->
+                <div class="user-indicator d-none d-md-flex">
+                    <div class="user-avatar">
+                        {{ user.first_name|default:user.username|first|upper }}
+                    </div>
+                    <span>{{ user.first_name|default:user.username }}</span>
+                </div>
+                
+                <!-- Menú desplegable -->
+                <div class="dropdown">
+                    <button class="dropdown-toggle" type="button" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i>
+                        Mi Cuenta
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        {% if user.perfil.rol == 'administrador' %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'admin:index' %}">
+                                <i class="bi bi-gear-fill"></i>
+                                Panel de Administración
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'usuarios:perfil' %}">
+                                <i class="bi bi-person-fill"></i>
+                                Perfil
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'usuarios:logout' %}">
+                                <i class="bi bi-box-arrow-right"></i>
+                                Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </nav>
     {% endif %}
@@ -102,6 +252,7 @@
             <br>
             <a href="{% url 'auditoria:log_list' %}" class="log">Registro de Auditoría</a>
         </small>
+        
     </footer>
     {% endif %}
     {% endblock %}
