@@ -1,20 +1,21 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import Perfil
+from django.forms.widgets import FileInput
 
 class RegistroForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label='Contraseña')
     password_confirmacion = forms.CharField(widget=forms.PasswordInput, label='Confirmar Contraseña')
 
-    # Para agregar estilos bootstrap a todos los campos y no uno a uno
+  
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Aplica la clase Bootstrap a todos los campos automáticamente
+       
         for field_name, field in self.fields.items():
             widget = field.widget
             existing_classes = widget.attrs.get('class', '')
-            # Evita duplicar clases
-            if 'form-control' not in existing_classes:
+           
+            if 'form-control' not in existing_classes: 
                 widget.attrs['class'] = (existing_classes + ' form-control').strip()
 
     class Meta:
@@ -41,9 +42,10 @@ class PerfilForm(forms.ModelForm):
         fields = ['username', 'email']
 
 class FotoPerfilForm(forms.ModelForm):
-    """
-    Un formulario separado solo para la foto, para mantener la lógica limpia.
-    """
     class Meta:
         model = Perfil
         fields = ['foto']
+        widgets = {
+            'foto': FileInput(attrs={'class': 'form-control'})
+        }
+        

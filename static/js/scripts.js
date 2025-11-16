@@ -17,3 +17,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const fileInput = document.getElementById('{{ foto_form.foto.id_for_label }}');
+    const previewImage = document.getElementById('foto-preview');
+
+   
+    fileInput.addEventListener('change', function() {
+       
+        if (fileInput.files && fileInput.files[0]) {
+            
+            const reader = new FileReader();   
+            reader.onload = function(e) {
+              
+                previewImage.src = e.target.result;
+            }
+            
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    });
+});

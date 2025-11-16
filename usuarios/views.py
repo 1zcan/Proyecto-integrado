@@ -9,7 +9,7 @@ from .forms import RegistroForm, PerfilForm, FotoPerfilForm
 
 def registro(request):
     if request.user.is_authenticated:
-        return redirect('articulos:lista_articulos')
+        return redirect('dashboard')
     
     if request.method == 'POST':
         form = RegistroForm(request.POST)

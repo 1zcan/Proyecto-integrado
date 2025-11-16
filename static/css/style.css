@@ -228,6 +228,9 @@ footer.app-footer a.log:hover {
     margin-bottom: 1.25rem;
 }
 
+
+
+
 /* Parche CSS para campos de Django (aplicado a formularios dentro de .card-form) */
 .card-form form select,
 .card-form form input[type="text"],
