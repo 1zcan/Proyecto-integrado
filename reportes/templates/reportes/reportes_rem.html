@@ -1,95 +1,98 @@
-{% extends "base.html" %} {# Asegúrate que tu app 'inicio' tenga un base.html #}
+{% extends "base.html" %}
 
 {% block title %}Reportes REM (A11, A21, A24){% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Reportes REM (A11, A21, A24)</h1>
-    <p class="text-gray-600 mb-6">Consolidado de indicadores REM para el período seleccionado.</p>
+<h2 class="mb-3">Reportes REM (A11, A21, A24)</h2>
+<p class="text-muted mb-4">Consolidado de indicadores REM para el período seleccionado.</p>
 
-    <!-- Filtros -->
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-        <form method="get" action="" id="filtroForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-1">
-                {{ form.anio.label_tag }}
-                {{ form.anio }}
-            </div>
-            <div class="md:col-span-1">
-                {{ form.mes.label_tag }}
-                {{ form.mes }}
-            </div>
-            <div class="md:col-span-2 flex items-end space-x-2">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
-                    <i class="fas fa-filter mr-2"></i>Filtrar
-                </button>
-                <button type="button" id="btnExportExcel" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300">
-                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
-                </button>
-                <button type="button" id="btnExportPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300">
-                    <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
-                </button>
+<div class="card shadow-sm border-0 mb-4 rem-form">
+    <div class="card-body">
+        <form method="get" action="" id="filtroForm">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="{{ form.anio.id_for_label }}" class="form-label">Año</label>
+                    {{ form.anio }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.mes.id_for_label }}" class="form-label">Mes</label>
+                    {{ form.mes }}
+                </div>
+                <div class="col-md-6 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter"></i> Filtrar
+                    </button>
+                    <button type="button" id="btnExportExcel" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                    </button>
+                    <button type="button" id="btnExportPDF" class="btn btn-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+                    </button>
+                </div>
             </div>
         </form>
     </div>
+</div>
 
-    <!-- Resultados -->
-    {% if datos %}
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Resultados para {{ datos.periodo }}</h2>
+{% if datos %}
+    <div class="card shadow-sm border-0 rem-results">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Resultados para {{ datos.periodo }}</h5>
+        </div>
+        <div class="card-body p-4">
 
-            <!-- Sección REM A21 -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold text-gray-600 mb-3">REM A21 - Modelo Atención Parto</h3>
-                <table class="min-w-full divide-y divide-gray-200">
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Partos</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ datos.rem_a21.total_partos }}</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Cesáreas</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ datos.rem_a21.total_cesareas }}</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Partos con Acompañamiento</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ datos.rem_a21.partos_con_acompanamiento }}</td>
-                        </tr>
-                        <!-- ... más filas ... -->
-                    </tbody>
-                </table>
+            <div class="mb-4">
+                <h3 class="h5 section-title">REM A21 - Modelo Atención Parto</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <tbody>
+                            <tr>
+                                <td>Total Partos</td>
+                                <td><strong>{{ datos.rem_a21.total_partos }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Total Cesáreas</td>
+                                <td><strong>{{ datos.rem_a21.total_cesareas }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Partos con Acompañamiento</td>
+                                <td><strong>{{ datos.rem_a21.partos_con_acompanamiento }}</strong></td>
+                            </tr>
+                            </tbody>
+                    </table>
+                </div>
             </div>
 
-            <!-- Sección REM A24 -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold text-gray-600 mb-3">REM A24 - Atención Recién Nacido</h3>
-                <table class="min-w-full divide-y divide-gray-200">
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Recién Nacidos</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ datos.rem_a24.total_rn }}</td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">RN con Lactancia (60 min)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ datos.rem_a24.rn_con_lm_60min }}</td>
-                        </tr>
-                        <!-- ... más filas ... -->
-                    </tbody>
-                </table>
+            <div>
+                <h3 class="h5 section-title">REM A24 - Atención Recién Nacido</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <tbody>
+                            <tr>
+                                <td>Total Recién Nacidos</td>
+                                <td><strong>{{ datos.rem_a24.total_rn }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>RN con Lactancia (60 min)</td>
+                                <td><strong>{{ datos.rem_a24.rn_con_lm_60min }}</strong></td>
+                            </tr>
+                            </tbody>
+                    </table>
+                </div>
             </div>
             
-            <!-- (Agregar tabla para REM A11) -->
+            </div>
+    </div>
 
-        </div>
-    {% elif request.GET.anio %}
-        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-            <p>No se encontraron datos para el período seleccionado.</p>
-        </div>
-    {% else %}
-        <div class="bg-gray-100 border-l-4 border-gray-500 text-gray-700 p-4" role="alert">
-            <p>Seleccione un año y un mes para generar el reporte.</p>
-        </div>
-    {% endif %}
-</div>
+{% elif request.GET.anio %}
+    <div class="alert alert-info" role="alert">
+        <p class="mb-0">No se encontraron datos para el período seleccionado.</p>
+    </div>
+{% else %}
+    <div class="alert alert-secondary" role="alert">
+        <p class="mb-0">Seleccione un año y un mes para generar el reporte.</p>
+    </div>
+{% endif %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -108,4 +111,65 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+{% endblock %}
+
+
+{% block styles %}
+<style>
+
+    .rem-form form select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+
+    .rem-form form select:focus {
+        border-color: #007bff;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+
+ 
+    .rem-results .section-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #343a40;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+   
+    .rem-results .table {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden; 
+    }
+
+    .rem-results .table td {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+    }
+
+ 
+    .rem-results .table td:first-child {
+        color: #495057; 
+    }
+</style>
 {% endblock %}

@@ -68,7 +68,7 @@
             </a>
             <span class="navbar-text">
                 {% if user.is_authenticated %}
-                    Bienvenida, {{ user.first_name|default:user.username }}
+                    Bienvenid@, {{ user.first_name|default:user.username }}
                     <a href="{% url 'usuarios:logout' %}" class="ms-2 text-secondary" title="Cerrar Sesión">
                         <i class="bi bi-box-arrow-right"></i>
                     </a>

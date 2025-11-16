@@ -3,38 +3,116 @@
 {% block title %}Modelo de Atención (REM A21){% endblock %}
 
 {% block content %}
-<h2>Modelo de Atención del Parto (REM A21)</h2>
-<p>Parto ID: {{ parto.id }} - Madre: {{ parto.madre.nombre_completo }}</p>
 
-<form method="post">
+<h2 class="mb-3">Modelo de Atención del Parto (REM A21)</h2>
+<h5 class="text-muted mb-4">Parto ID: {{ parto.id }} - Madre: {{ parto.madre.nombre_completo }}</h5>
+
+<form method="post" class="rem-a21-form">
     {% csrf_token %}
     
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+
             <div class="form-check mb-2">
                 {{ form.libertad_movimiento }}
                 <label class="form-check-label" for="{{ form.libertad_movimiento.id_for_label }}">
                     Libertad de movimiento
                 </label>
             </div>
-            <div class="form-check mb-2">
+            <div class="form-check mb-3">
                 {{ form.regimen_hidrico_amplio }}
                 <label class="form-check-label" for="{{ form.regimen_hidrico_amplio.id_for_label }}">
                     Régimen hídrico amplio
                 </label>
             </div>
             
-            <div class="form-group mb-2">
-                {{ form.manejo_dolor.label_tag }}
-                {{ form.manejo_dolor }} </div>
+            <hr class="my-3">
+
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.manejo_dolor.id_for_label }}">
+                    {{ form.manejo_dolor.label }}
+                </label>
+                {{ form.manejo_dolor }}
+            </div>
             
-            <div class="form-group mb-2">
-                {{ form.posicion_expulsivo.label_tag }}
-                {{ form.posicion_expulsivo }} </div>
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.posicion_expulsivo.id_for_label }}">
+                    {{ form.posicion_expulsivo.label }}
+                </label>
+                {{ form.posicion_expulsivo }}
+            </div>
         </div>
     </div>
 
-    <button type="submit" class="btn btn-success mt-3">Guardar REM A21</button>
-    <a href="{% url 'parto_lista' %}" class="btn btn-secondary mt-3">Volver al Listado</a>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-success px-4">
+            <i class="bi bi-check-lg"></i> Guardar REM A21
+        </button>
+        <a href="{% url 'parto_lista' %}" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-x-lg"></i> Volver al Listado
+        </a>
+    </div>
 </form>
+{% endblock %}
+
+
+{% block styles %}
+<style>
+  
+    .rem-a21-form .form-check input[type="checkbox"] {
+        width: 1em;
+        height: 1em;
+        margin-top: 0.25em;
+        vertical-align: top;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25em;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    .rem-a21-form .form-check input[type="checkbox"]:focus {
+        border-color: #007bff;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .rem-a21-form .form-check input[type="checkbox"]:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    }
+    
+    .rem-a21-form .form-check-label {
+        padding-left: 0.5em;
+    }
+
+   
+    .rem-a21-form select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .rem-a21-form select:focus {
+        border-color: #007bff;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+</style>
 {% endblock %}

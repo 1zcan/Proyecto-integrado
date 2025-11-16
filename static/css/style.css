@@ -1,0 +1,436 @@
+/*
+=====================================================
+ ARCHIVO: static/css/main.css
+ Hoja de estilos principal del Sistema Perinatal
+=====================================================
+
+ ÍNDICE:
+ 1. Globales y Tipografía
+ 2. Layout (Navbar y Footer de la App)
+ 3. Páginas Standalone (Login y Registro)
+ 4. Formularios (Patch de Django y Estilos)
+ 5. Componentes de Tarjetas (Dashboard)
+ 6. Tablas y Auditoría
+ 7. Botones y Utilidades
+ 
+=====================================================
+*/
+
+/* --- 1. Globales y Tipografía --- */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    background-color: #f8f9fa; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #212529;
+}
+
+/* * NOTA IMPORTANTE:
+ * Añade 'class="app-body"' al <body> de tu 'base.html'
+ */
+body.app-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+/* * NOTA IMPORTANTE:
+ * Añade 'class="standalone-page"' al <body> de 'login.html' y 'registro.html'
+ */
+body.standalone-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    height: auto;
+    min-height: 100%;
+}
+
+main {
+    flex-grow: 1; /* Para el sticky footer en app-body */
+}
+
+h1, h2, h4, h5 {
+    font-weight: 600;
+    color: #212529;
+}
+
+/* --- 2. Layout (Navbar y Footer de la App) --- */
+.navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+footer.app-footer {
+    background-color: #ffffff;
+    border-top: 1px solid #dee2e6;
+    padding: 1.5rem 0;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    text-align: center;
+    color: #6c757d;
+}
+
+footer.app-footer a.log {
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+footer.app-footer a.log:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+/* --- 3. Páginas Standalone (Login y Registro) --- */
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem;
+    margin: auto; /* Centra en la página standalone */
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.login-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.5rem auto;
+    border-radius: 50%;
+    background-color: #e6f0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.login-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.login-container h2 {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #495057;
+    margin-bottom: 2rem;
+}
+
+.login-container form {
+    text-align: left;
+}
+
+.login-container .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #343a40;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"],
+.login-container input[type="email"],
+.login-container input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-container input[type="text"]:focus,
+.login-container input[type="password"]:focus,
+.login-container input[type="email"]:focus,
+.login-container input[type="number"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.login-container footer {
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* --- 4. Formularios (Patch de Django y Estilos) --- */
+
+/* Estilos de error y mensajes */
+.form-errors, .alert-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.alert-message.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+.errorlist {
+    color: #721c24;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    padding-left: 0;
+    list-style-type: none;
+    margin: 0;
+}
+
+.errorlist li {
+    margin-top: 0.25rem;
+}
+
+/* Estilos de formulario interno (p.ej. Registro Parto) */
+.card-form {
+    border: none;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Parche CSS para campos de Django (aplicado a formularios dentro de .card-form) */
+.card-form form select,
+.card-form form input[type="text"],
+.card-form form input[type="date"],
+.card-form form input[type="time"],
+.card-form form input[type="number"] {
+    display: block;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.card-form form select {
+    padding: .375rem 2.25rem .375rem .75rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px 12px;
+}
+
+.card-form form input:focus,
+.card-form form select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+.card-form .form-check input[type="checkbox"] {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.25em;
+    vertical-align: top;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.card-form .form-check input[type="checkbox"]:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+.card-form .form-check input[type="checkbox"]:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+}
+
+/* --- 5. Componentes de Tarjetas (Dashboard) --- */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 8px; /* Radio de borde unificado */
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.icon-pink { color: #d63384; background-color: #fce6f0; }
+.icon-blue { color: #0d6efd; background-color: #e7f0ff; }
+.icon-green { color: #198754; background-color: #e8f3ee; }
+.icon-purple { color: #6f42c1; background-color: #f1eefe; }
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-link:hover .card-title {
+    color: #0d6efd;
+}
+
+.card-title {
+    font-weight: 600;
+}
+
+/* --- 6. Tablas y Auditoría --- */
+.card-audit {
+    border: none;
+    border-radius: 8px;
+    overflow: hidden; /* Clave para que la tabla respete los bordes */
+}
+
+.card-audit .table {
+    margin-bottom: 0; /* Para que encaje perfecto en la card */
+}
+
+.card-audit .table thead {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.card-audit .table th {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    vertical-align: middle;
+}
+
+.card-audit .table td {
+    font-size: 0.9rem;
+    color: #343a40;
+    vertical-align: middle;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.pagination .page-link {
+    border-radius: 4px;
+    margin: 0 2px;
+    color: #007bff;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+}
+
+/* --- 7. Botones y Utilidades --- */
+.btn-lg {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #007bff; /* Azul del login */
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; 
+    border-color: #0056b3;
+}
+
+/* Botón de login (Standalone) */
+.btn-submit {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3;
+}
+
+/* Botón de registro (Standalone) */
+.btn-register {
+    display: block;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 4px;
+    text-align: center;
+    text-decoration: none;
+    color: #007bff;
+    background-color: #ffffff;
+    border: 1px solid #007bff;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-register:hover {
+    background-color: #007bff;
+    color: #ffffff;
+}
+

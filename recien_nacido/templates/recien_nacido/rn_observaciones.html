@@ -1,66 +1,118 @@
-<!-- 
-  rn_observaciones.html
-  Muestra la bitácora de observaciones y permite añadir nuevas.
--->
 {% extends "base.html" %}
 
-{% block titulo %}Observaciones del Recién Nacido{% endblock %}
+{% block title %}Observaciones del Recién Nacido{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-3xl">
-  <h1 class="text-3xl font-bold text-gray-800 mb-6">Observaciones del Recién Nacido</h1>
-  <p class="text-lg text-gray-600 mb-6">RN de: <strong class="font-medium">{{ rn.parto.madre.nombre_completo }}</strong> (Parto: {{ rn.parto.fecha }})</p>
+<div class="row justify-content-center">
+<div class="col-lg-9">
 
-  <!-- Formulario para nueva observación -->
-  <form method="POST" class="bg-white p-6 shadow-md rounded-lg mb-8">
-    {% csrf_token %}
-    <h2 class="text-xl font-semibold text-gray-700 mb-4">Añadir Nueva Observación / Diagnóstico</h2>
-    
-    {{ observacion_form.non_field_errors }}
-    
-    <div class="flex flex-col">
-      <label for="{{ observacion_form.texto.id_for_label }}" class="mb-2 font-medium text-sm text-gray-600">{{ observacion_form.texto.label }}</S.label>
-      {{ observacion_form.texto }}
-      {% if observacion_form.texto.errors %}
-        <p class="mt-1 text-xs text-red-600">{{ observacion_form.texto.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <div class="flex justify-end mt-4">
-      <!-- Lógica de firma simple iría aquí -->
-      <button type="submit" class="px-6 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
-        Guardar Observación
-      </button>
-    </div>
-  </form>
+    <h2 class="mb-3">Observaciones del Recién Nacido</h2>
+    <h5 class="text-muted mb-4">RN de: <strong>{{ rn.parto.madre.nombre_completo }}</strong> (Parto: {{ rn.parto.fecha }})</h5>
 
-  <!-- Historial de Observaciones -->
-  <div class="bg-white p-6 shadow-md rounded-lg">
-    <h2 class="text-xl font-semibold text-gray-700 mb-4">Historial de Observaciones</h2>
-    <div class="space-y-6">
-      {% for obs in observaciones %}
-        <div class="border-b border-gray-200 pb-4">
-          <p class="text-sm text-gray-800">{{ obs.texto }}</p>
-          <div class="flex justify-between items-center mt-2">
-            <span class="text-xs text-gray-500">
-              Por: <strong class="font-medium">{{ obs.autor.username|default:"Sistema" }}</strong>
-              el {{ obs.fecha|date:"d/m/Y \a \l\a\s H:i" }}
-            </span>
-            {% if obs.firma_simple %}
-              <span class="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800">
-                Firmado
-              </span>
-            {% else %}
-              <span class="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                Sin Firmar
-              </span>
-            {% endif %}
-          </div>
+    <form method="POST" class="card shadow-sm border-0 mb-4 rn-obs-form">
+        {% csrf_token %}
+        
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Añadir Nueva Observación / Diagnóstico</h5>
         </div>
-      {% empty %}
-        <p class="text-gray-500 text-sm">No hay observaciones registradas para este RN.</p>
-      {% endfor %}
+        
+        <div class="card-body p-4">
+            {% if observacion_form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ observacion_form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div>
+                <label for="{{ observacion_form.texto.id_for_label }}" class="form-label">
+                    {{ observacion_form.texto.label }}
+                </label>
+                {{ observacion_form.texto }} {% if observacion_form.texto.errors %}
+                <div class="text-danger small mt-1">
+                    {{ observacion_form.texto.errors|join:", " }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary">
+                    Guardar Observación
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="card shadow-sm border-0 rn-obs-history">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Historial de Observaciones</h5>
+        </div>
+        
+        <ul class="list-group list-group-flush">
+            {% for obs in observaciones %}
+            <li class="list-group-item">
+                <p class="mb-2">{{ obs.texto }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Por: <strong>{{ obs.autor.username|default:"Sistema" }}</strong>
+                        el {{ obs.fecha|date:"d/m/Y \a \l\a\s H:i" }}
+                    </small>
+                    
+                    {% if obs.firma_simple %}
+                    <span class="badge bg-success-subtle text-success-emphasis">
+                        Firmado
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis">
+                        Sin Firmar
+                    </span>
+                    {% endif %}
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-muted text-center">
+                No hay observaciones registradas para este RN.
+            </li>
+            {% endfor %}
+        </ul>
     </div>
-  </div>
+
 </div>
+</div> {% endblock %}
+
+
+{% block styles %}
+<style>
+ 
+    .rn-obs-form textarea {
+        display: block;
+        width: 100%;
+        min-height: 120px; 
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+
+    .rn-obs-form textarea:focus {
+        border-color: #007bff; 
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    
+
+    .rn-obs-history .list-group-item {
+     
+        padding: 1rem 1.25rem;
+    }
+    
+    .rn-obs-history .badge {
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+</style>
 {% endblock %}

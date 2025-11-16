@@ -3,49 +3,62 @@
 {% block title %}Control de Calidad de Datos{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Control de Calidad de Datos</h1>
-    <p class="text-gray-600 mb-8">Revisión de inconsistencias y errores en los registros (Madre-Parto-RN).</p>
+<h2 class="mb-3">Control de Calidad de Datos</h2>
+<p class="text-muted mb-4">Revisión de inconsistencias y errores en los registros (Madre-Parto-RN).</p>
 
-    {% if datos %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
-                <strong class="font-bold">Errores Críticos: </strong>
-                <span class="block sm:inline">{{ datos.total_errores }}</span>
-            </div>
-            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg relative" role="alert">
-                <strong class="font-bold">Advertencias: </strong>
-                <span class="block sm:inline">{{ datos.total_advertencias }}</span>
+{% if datos %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Errores Críticos</h4>
+                <p class="mb-0">Total de errores encontrados: {{ datos.total_errores }}</p>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">Advertencias</h4>
+                <p class="mb-0">Total de advertencias encontradas: {{ datos.total_advertencias }}</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Detalle de Inconsistencias</h2>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+    <div class="card shadow-sm border-0 control-calidad-card">
+        
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Detalle de Inconsistencias</h5>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Chequeo</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nivel</th>
+                            <th scope="col">ID Chequeo</th>
+                            <th scope="col">Descripción</th>
+                            <th scope="col">Nivel</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody>
                         {% for item in datos.chequeos %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.descripcion }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.descripcion }}</td>
+                            <td>
                                 {% if item.tipo == 'Crítico' or item.tipo == 'Error' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                <span class="badge bg-danger-subtle text-danger-emphasis">
                                     {{ item.tipo }}
                                 </span>
                                 {% else %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
                                     {{ item.tipo }}
                                 </span>
                                 {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                No hay chequeos para mostrar.
                             </td>
                         </tr>
                         {% endfor %}
@@ -53,10 +66,52 @@
                 </table>
             </div>
         </div>
-    {% else %}
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4" role="alert">
-            <p>No se encontraron inconsistencias de datos. ¡Buen trabajo!</p>
-        </div>
-    {% endif %}
-</div>
+    </div>
+
+{% else %}
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">¡Buen trabajo!</h4>
+        <p class="mb-0">No se encontraron inconsistencias de datos.</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+
+{% block styles %}
+<style>
+
+    .control-calidad-card {
+        border: none;
+        border-radius: 8px; 
+        overflow: hidden; }
+
+  
+    .control-calidad-card .table thead {
+        background-color: #f8f9fa; 
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .control-calidad-card .table th {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.8rem; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1.25rem; 
+        vertical-align: middle;
+    }
+
+ 
+    .control-calidad-card .table td {
+        font-size: 0.9rem;
+        color: #343a40;
+        padding: 0.75rem 1.25rem;
+        vertical-align: middle;
+    }
+    
+
+    .badge {
+        font-weight: 500;
+    }
+</style>
 {% endblock %}

@@ -1,69 +1,118 @@
-<!-- 
-  rn_lista.html
-  Muestra la lista de todos los Recién Nacidos registrados.
--->
-{% extends "base.html" %} <!-- Asume que tienes un base.html -->
+{% extends "base.html" %}
 
-{% block titulo %}Lista de Recién Nacidos{% endblock %}
+{% block title %}Lista de Recién Nacidos{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Registros de Recién Nacidos</h1>
-    <p class="text-gray-600">Para registrar un nuevo RN, acceda al Parto correspondiente.</p>
-  </div>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Madre</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Parto</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sexo</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peso (g)</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APGAR 5'</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        {% for rn in recien_nacidos %}
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-medium text-gray-900">{{ rn.parto.madre.nombre_completo }}</div>
-              <div class="text-sm text-gray-500">{{ rn.parto.madre.rut }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ rn.parto.fecha|date:"d/m/Y" }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                           {% if rn.sexo == 'F' %} bg-pink-100 text-pink-800
-                           {% elif rn.sexo == 'M' %} bg-blue-100 text-blue-800
-                           {% else %} bg-gray-100 text-gray-800 {% endif %}">
-                {{ rn.get_sexo_display }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ rn.peso }}g</div>
-            </td>
-             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ rn.apgar_5 }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <a href="{% url 'rn_editar' rn.pk %}" class="text-indigo-600 hover:text-indigo-900">At. Inmediata</a>
-              <a href="{% url 'rn_profilaxis' rn.pk %}" class="ml-4 text-green-600 hover:text-green-900">Profilaxis</a>
-              <a href="{% url 'rn_observaciones' rn.pk %}" class="ml-4 text-blue-600 hover:text-blue-900">Obs.</a>
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-              No hay recién nacidos registrados.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="card shadow-sm border-0">
+    
+    <div class="card-header bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Registros de Recién Nacidos</h2>
+            <p class="text-muted small mb-0">Para registrar un nuevo RN, acceda al Parto correspondiente.</p>
+        </div>
+    </div>
+
+    <div class="table-responsive rn-list-table">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Madre</th>
+                    <th scope="col">Fecha Parto</th>
+                    <th scope="col">Sexo</th>
+                    <th scope="col">Peso (g)</th>
+                    <th scope="col">APGAR 5'</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rn in recien_nacidos %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ rn.parto.madre.nombre_completo }}</div>
+                        <div class="small text-muted">{{ rn.parto.madre.rut }}</div>
+                    </td>
+                    <td>
+                        <div class="small">{{ rn.parto.fecha|date:"d/m/Y" }}</div>
+                    </td>
+                    <td>
+                        {% if rn.sexo == 'F' %}
+                        <span class="badge bg-pink-subtle text-pink-emphasis">
+                            {{ rn.get_sexo_display }}
+                        </span>
+                        {% elif rn.sexo == 'M' %}
+                        <span class="badge bg-primary-subtle text-primary-emphasis">
+                            {{ rn.get_sexo_display }}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                            {{ rn.get_sexo_display }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ rn.peso }}g</td>
+                    <td>{{ rn.apgar_5 }}</td>
+                    <td>
+                        <a href="{% url 'rn_editar' rn.pk %}" class="btn btn-sm btn-outline-primary" title="Atención Inmediata">
+                            <i class="bi bi-clipboard-data-fill"></i>
+                        </a>
+                        <a href="{% url 'rn_profilaxis' rn.pk %}" class="btn btn-sm btn-outline-success" title="Profilaxis">
+                            <i class="bi bi-shield-check"></i>
+                        </a>
+                        <a href="{% url 'rn_observaciones' rn.pk %}" class="btn btn-sm btn-outline-info" title="Observaciones">
+                            <i class="bi bi-eye-fill"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        No hay recién nacidos registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock content %}
+
+
+{% block styles %}
+<style>
+
+    /* 1. Estilo de Cabecera de Tabla */
+    .rn-list-table table thead {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .rn-list-table table th {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+    }
+
+    /* 2. Estilo de Celdas de Tabla */
+    .rn-list-table table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+    
+    /* 3. Estilo para Badges (los de sexo F/M) */
+    .rn-list-table .badge {
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    
+ 
+    .rn-list-table .btn {
+        margin-right: 4px;
+    }
+</style>
+{% endblock %}
