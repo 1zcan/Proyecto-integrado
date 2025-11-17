@@ -1,250 +1,218 @@
 {% extends "base.html" %}
 
-{% block title %}
-    {% if vista_elegida == 'A11' %}
-        Reporte REM A11 (Madre)
-    {% elif vista_elegida == 'A21' %}
-        Reporte REM A21 (Parto)
-    {% elif vista_elegida == 'A24' %}
-        Reporte REM A24 (Recién Nacido)
-    {% else %}
-        Reportes REM (A11, A21, A24)
-    {% endif %}
-{% endblock %}
+{% block title %}Reporte REM {% if datos.periodo %}{{ datos.periodo }}{% endif %}{% endblock %}
 
 {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Reporte Mensual Estadístico (REM)</h1>
+    <p class="text-muted mb-0">Periodo: <strong>{% if datos.periodo %}{{ datos.periodo }}{% else %}Seleccione un Periodo{% endif %}</strong></p>
+</div>
 
-{% if vista_elegida == 'A11' %}
-    <h2 class="mb-3">Reporte REM A11 (Madre)</h2>
-    <p class="text-muted mb-4">Detalle de indicadores de Tamizajes (A11) para el período seleccionado.</p>
-{% elif vista_elegida == 'A21' %}
-    <h2 class="mb-3">Reporte REM A21 (Parto)</h2>
-    <p class="text-muted mb-4">Detalle de indicadores de Parto y Robson (A21) para el período seleccionado.</p>
-{% elif vista_elegida == 'A24' %}
-    <h2 class="mb-3">Reporte REM A24 (Recién Nacido)</h2>
-    <p class="text-muted mb-4">Detalle de indicadores de Recién Nacido (A24) para el período seleccionado.</p>
-{% else %} <h2 class="mb-3">Reportes REM (A11, A21, A24)</h2>
-    <p class="text-muted mb-4">Consolidado de indicadores REM para el período seleccionado.</p>
-{% endif %}
-
-
-<div class="card shadow-sm border-0 mb-4 rem-form">
+<div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
     <div class="card-body">
-        <form method="get" action="" id="filtroForm">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="{{ form.anio.id_for_label }}" class="form-label">Año</label>
-                    {{ form.anio }}
-                </div>
-                <div class="col-md-3">
-                    <label for="{{ form.mes.id_for_label }}" class="form-label">Mes</label>
-                    {{ form.mes }}
-                </div>
-                <div class="col-md-3">
-                    <label for="{{ form.vista.id_for_label }}" class="form-label">Vista</label>
-                    {{ form.vista }}
-                </div>
-                <div class="col-md-3 d-flex flex-wrap gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-filter"></i> Filtrar
-                    </button>
-                    <button type="button" id="btnExportExcel" class="btn btn-success">
-                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
-                    </button>
-                    <button type="button" id="btnExportPDF" class="btn btn-danger">
-                        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-                    </button>
-                </div>
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="id_anio" class="form-label">Año</label>
+                <select name="anio" id="id_anio" class="form-select">
+                    {% for y in anios_disponibles %}
+                        <option value="{{ y }}" {% if y|stringformat:"s" == selected_anio %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="id_mes" class="form-label">Mes</label>
+                <select name="mes" id="id_mes" class="form-select">
+                    <option value="">-- Seleccionar Mes --</option>
+                    {% for m, label in meses_disponibles %}
+                        <option value="{{ m }}" {% if m|stringformat:"s" == selected_mes %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4 d-flex gap-2 justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-filter"></i> Generar Reporte
+                </button>
+                <button type="button" id="btnExportExcel" class="btn btn-success" {% if not datos %}disabled{% endif %}>
+                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                </button>
+                <button type="button" id="btnExportPDF" class="btn btn-danger" {% if not datos %}disabled{% endif %}>
+                    <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 {% if datos %}
-    <div class="card shadow-sm border-0 rem-results">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0">
-                {% if vista_elegida == 'A11' %}
-                    Resultados REM A11 para {{ datos.periodo }}
-                {% elif vista_elegida == 'A21' %}
-                    Resultados REM A21 para {{ datos.periodo }}
-                {% elif vista_elegida == 'A24' %}
-                    Resultados REM A24 para {{ datos.periodo }}
-                {% else %}
-                    Resultados Consolidados para {{ datos.periodo }}
-                {% endif %}
-            </h5>
-        </div>
-        <div class="card-body p-4">
-
-            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A11' %}
-            <div class="mb-4">
-                <h3 class="h5 section-title">REM A11 - Tamizajes Madre</h3>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <tbody>
-                            <tr>
-                                <td>Tamizajes VIH Positivos</td>
-                                <td><strong>{{ datos.rem_a11.tamizajes_vih_positivos }}</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 8px;">
+            <div class="card-body">
+                
+                <div class="mb-4">
+                    <h3 class="h5 section-title">REM A11 - Tamizajes Madre</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Tamizajes **VIH Positivos**</td>
+                                    <td><strong>{{ datos.rem_a11.tamizajes_ih_positivos }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Tamizajes **VDRL Positivos** (Sífilis)</td>
+                                    <td><strong>{{ datos.rem_a11.tamizajes_vdrl_positivos }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>VDRL Positivos con **Tratamiento Completo**</td>
+                                    <td><strong>{{ datos.rem_a11.tamizajes_vdrl_con_tratamiento }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Tamizajes **Hepatitis B Positivos**</td>
+                                    <td><strong>{{ datos.rem_a11.tamizajes_hepb_positivos }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            {% endif %}
 
+                <hr class="my-4">
 
-            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A21' %}
-            <div class="mb-4">
-                <h3 class="h5 section-title">REM A21 - Modelo Atención Parto</h3>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <tbody>
-                            <tr>
-                                <td>Total Partos</td>
-                                <td><strong>{{ datos.rem_a21.total_partos }}</strong></td>
-                            </tr>
-                            
+                <div class="mb-4">
+                    <h3 class="h5 section-title">REM A21 - Modelo Atención Parto</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Indicador</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Total Partos Registrados</td>
+                                    <td><strong>{{ datos.rem_a21.total_partos }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Partos con Acompañamiento</td>
+                                    <td><strong>{{ datos.rem_a21.partos_con_acompanamiento }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h5 class="h6 mt-3">Desglose por Tipo de Parto</h5>
+                        <table class="table table-sm">
+                            <tbody>
                             {% for desglose in datos.rem_a21.desglose_partos %}
-                            <tr>
-                                <td style="padding-left: 2rem;">↳ {{ desglose.tipo_parto__valor }}</td>
-                                <td><strong>{{ desglose.total }}</strong></td>
-                            </tr>
-                            {% endfor %}
-
-                            <tr>
-                                <td colspan="2" class="text-muted pt-3" style="font-size: 0.9rem;">Clasificación Robson:</td>
-                            </tr>
-                            {% for desglose in datos.rem_a21.desglose_robson %}
-                            <tr>
-                                <td style="padding-left: 2rem;">↳ Grupo {{ desglose.clasificacion_robson__grupo }}</td>
-                                <td><strong>{{ desglose.total }}</strong></td>
-                            </tr>
+                                <tr>
+                                    <td>Tipo {{ desglose.tipo_parto__valor }}</td>
+                                    <td>{{ desglose.total }}</td>
+                                </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="2" class="text-muted" style="padding-left: 2rem;">(Sin datos de Robson)</td>
-                            </tr>
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No hay datos de desglose de partos.</td>
+                                </tr>
                             {% endfor %}
-                            
-                            <tr class="pt-3">
-                                <td>Partos con Acompañamiento</td>
-                                <td><strong>{{ datos.rem_a21.partos_con_acompanamiento }}</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
+                            </tbody>
+                        </table>
 
-            {% if vista_elegida == 'CONSOLIDADO' or vista_elegida == 'A24' %}
-            <div>
-                <h3 class="h5 section-title">REM A24 - Atención Recién Nacido</h3>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <tbody>
-                            <tr>
-                                <td>Total Recién Nacidos</td>
-                                <td><strong>{{ datos.rem_a24.total_rn }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td>RN con Lactancia (60 min)</td>
-                                <td><strong>{{ datos.rem_a24.rn_con_lm_60min }}</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <h5 class="h6 mt-3">Clasificación Robson</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                            {% for desglose in datos.rem_a21.desglose_robson %}
+                                <tr>
+                                    <td>Grupo {{ desglose.clasificacion_robson__grupo }}</td>
+                                    <td>{{ desglose.total }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No hay datos de Clasificación Robson.</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+                
+                <hr class="my-4">
+
+                <div class="mb-4">
+                    <h3 class="h5 section-title">REM A24 - Atención Recién Nacido</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-sm">
+                            <tbody>
+                                <tr>
+                                    <td>Total Recién Nacidos</td>
+                                    <td><strong>{{ datos.rem_a24.total_rn }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>RN con Lactancia Materna en 60 min</td>
+                                    <td><strong>{{ datos.rem_a24.rn_con_lm_60min }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>RN con Bajo Peso (<2500g)</td>
+                                    <td><strong>{{ datos.rem_a24.rn_bajo_peso }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>RN con Apgar < 7 (5 min)</td>
+                                    <td><strong>{{ datos.rem_a24.rn_apgar_bajo }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>RN con Reanimación (Básica o Avanzada)</td>
+                                    <td><strong>{{ datos.rem_a24.rn_con_reanimacion }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Profilaxis Vitamina K</td>
+                                    <td><strong>{{ datos.rem_a24.rn_con_vitamina_k }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Profilaxis Oftálmica</td>
+                                    <td><strong>{{ datos.rem_a24.rn_con_prof_oftalmica }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
-            {% endif %}
-            
         </div>
     </div>
+</div>
 
-{% elif request.GET.anio %}
-    <div class="alert alert-info" role="alert">
-        <p class="mb-0">No se encontraron datos para el período seleccionado.</p>
-    </div>
-{% else %}
-    <div class="alert alert-secondary" role="alert">
-        <p class="mb-0">Seleccione un año y un mes para generar el reporte.</p>
-    </div>
+{% elif selected_anio and selected_mes %}
+<div class="alert alert-warning text-center" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    No se encontraron datos para el periodo seleccionado ({{ selected_mes }}-{{ selected_anio }}).
+</div>
 {% endif %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('filtroForm');
     
-    document.getElementById('btnExportExcel').addEventListener('click', function() {
+    function getQueryParams() {
+        const form = document.querySelector('form');
         const params = new URLSearchParams(new FormData(form));
-        params.append('format', 'excel');
-        window.location.href = `?${params.toString()}`;
-    });
+        return params.toString();
+    }
+    
+    const btnExcel = document.getElementById('btnExportExcel');
+    if (btnExcel) {
+        btnExcel.addEventListener('click', function() {
+            let params = getQueryParams();
+            params += '&format=excel'; // Añade el formato Excel
+            window.location.href = `?${params}`;
+        });
+    }
 
-    document.getElementById('btnExportPDF').addEventListener('click', function() {
-        const params = new URLSearchParams(new FormData(form));
-        params.append('format', 'pdf');
-        window.location.href = `?${params.toString()}`;
-    });
+    const btnPDF = document.getElementById('btnExportPDF');
+    if (btnPDF) {
+        btnPDF.addEventListener('click', function() {
+            let params = getQueryParams();
+            params += '&format=pdf'; // Añade el formato PDF
+            window.location.href = `?${params}`;
+        });
+    }
 });
 </script>
-
-{% endblock %}
-
-
-{% block styles %}
-<style>
-
-    .rem-form form select {
-        display: block;
-        width: 100%;
-        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        background-color: #fff;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 16px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 0.375rem;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
-
-    .rem-form form select:focus {
-        border-color: #007bff;
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-    }
-
- 
-    .rem-results .section-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        color: #343a40;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-   
-    .rem-results .table {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        overflow: hidden; 
-    }
-
-    .rem-results .table td {
-        padding: 0.8rem 1rem;
-        font-size: 0.95rem;
-    }
-
- 
-    .rem-results .table td:first-child {
-        color: #495057; 
-    }
-</style>
 {% endblock %}

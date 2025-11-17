@@ -21,20 +21,20 @@
     </div>
 </div>
 
-<!-- ============================
-        FILTROS
-=============================== -->
-
 <div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
     <div class="card-body">
-        <form method="get" class="row g-3 align-items-center">
+        <form method="get" class="row g-3 align-items-end">
             
-            <!-- FILTRO COMUNA -->
-            <div class="col-md-5">
-                <label for="filtro_comuna" class="form-label visually-hidden">Comuna</label>
+            <div class="col-md-4">
+                <label for="filtro_rut" class="form-label small">RUT (sin puntos, con guion)</label>
+                <input type="text" name="rut" id="filtro_rut" class="form-control" 
+                       placeholder="Ej: 12345678-9" value="{{ request.GET.rut|default:'' }}">
+            </div>
+
+            <div class="col-md-3">
+                <label for="filtro_comuna" class="form-label small">Comuna</label>
                 <select name="comuna" id="filtro_comuna" class="form-select">
                     <option value="">Todas las Comunas</option>
-
                     {% for c in comunas %}
                         <option value="{{ c.id }}" 
                             {% if c.id|stringformat:"s" == selected_comuna %}selected{% endif %}>
@@ -44,12 +44,10 @@
                 </select>
             </div>
 
-            <!-- FILTRO CESFAM -->
-            <div class="col-md-5">
-                <label for="filtro_cesfam" class="form-label visually-hidden">CESFAM</label>
+            <div class="col-md-3">
+                <label for="filtro_cesfam" class="form-label small">CESFAM</label>
                 <select name="cesfam" id="filtro_cesfam" class="form-select">
                     <option value="">Todos los CESFAM</option>
-
                     {% for ce in cesfams %}
                         <option value="{{ ce.id }}" 
                             {% if ce.id|stringformat:"s" == selected_cesfam %}selected{% endif %}>
@@ -59,7 +57,6 @@
                 </select>
             </div>
 
-            <!-- BOTÓN FILTRAR -->
             <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100">
                     <i class="bi bi-search"></i> Filtrar
@@ -69,10 +66,6 @@
         </form>
     </div>
 </div>
-
-<!-- ============================
-        TABLA LISTADO
-=============================== -->
 
 <div class="card shadow-sm border-0" style="border-radius: 8px; overflow: hidden;">
     <div class="card-body p-0">
@@ -95,42 +88,31 @@
                     <td class="text-nowrap">{{ madre.rut }}</td>
                     <td class="fw-medium">{{ madre.nombre_completo }}</td>
                     <td class="text-nowrap">{{ madre.fecha_nacimiento|date:"d-m-Y" }}</td>
-
                     <td>
                         {{ madre.comuna.valor|default:"-" }}
                     </td>
-
                     <td>
                         {{ madre.cesfam.valor|default:"-" }}
                     </td>
                     
                     <td>
-                        {% if madre.migrante %}
-                            <span class="badge bg-info-subtle text-info-emphasis">Migrante</span>
-                        {% endif %}
-                        {% if madre.pueblo_originario %}
-                            <span class="badge bg-warning-subtle text-warning-emphasis">P. Originario</span>
-                        {% endif %}
-                        {% if madre.discapacidad %}
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis">Discapacidad</span>
-                        {% endif %}
-                    </td>
+                        </td>
                     
                     <td class="text-nowrap">
-                        <a href="{% url 'madre_editar' pk=madre.pk %}" class="btn btn-sm btn-info" title="Editar Ficha">
-                            <i class="bi bi-pencil"></i> Ficha
+                        <a href="{% url 'madre_editar' pk=madre.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Ficha">
+                            <i class="bi bi-pencil"></i>
                         </a>
-                        <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" class="btn btn-sm btn-warning" title="Ver Tamizajes">
-                            <i class="bi bi-clipboard-pulse"></i> Tamizajes
+                        <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" class="btn btn-sm btn-outline-warning" title="Ver Tamizajes">
+                            <i class="bi bi-clipboard-pulse"></i>
                         </a>
-                        <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-secondary" title="Ver Observaciones">
-                            <i class="bi bi-chat-text"></i> Obs.
+                        <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver Observaciones">
+                            <i class="bi bi-chat-text"></i>
                         </a>
-                        <a href="{% url 'parto_crear_para_madre' madre.id %}" class="btn btn-primary btn-sm">
+                        <a href="{% url 'parto_crear_para_madre' madre.id %}" class="btn btn-primary btn-sm" title="Agregar Parto">
                             <i class="bi bi-plus-lg"></i> Agregar Parto
                         </a>
                     </td>
-                </tr>
+                    </tr>
                 {% empty %}
                 <tr>
                     <td colspan="7" class="text-center text-muted py-4">
@@ -149,6 +131,7 @@
 
 {% block styles %}
 <style>
+    /* --- Estilos para la Tabla --- */
     .table thead th {
         font-size: 0.8rem;
         text-transform: uppercase;
@@ -161,8 +144,52 @@
         font-weight: 500;
     }
     
-    .btn-sm i {
+    .table .btn {
+        margin-right: 4px;
+    }
+    
+    .btn i {
         margin-right: 3px;
+        vertical-align: -1px;
+    }
+
+    /* --- Estilos para los Filtros --- */
+    .form-control,
+    .form-select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .form-select {
+        padding-right: 2.25rem;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%<path fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #007bff;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    .form-label.small {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        font-size: .875em;
     }
 </style>
 {% endblock %}

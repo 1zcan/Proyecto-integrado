@@ -1,109 +1,124 @@
 """
-services.py (mencionado como services/queries.py en la guía)
+services.py (Final Version - Includes ALL calculated REM data)
 
 Este módulo contiene la lógica de negocio para obtener y procesar
-los datos de los reportes. Importa modelos de las otras apps.
+los datos de los reportes.
 """
 import datetime
-from django.db.models import Count, Q, Case, When, IntegerField, F
+from django.db.models import Count, Q
 from django.db.models.functions import ExtractYear
 
-# --- IMPORTANTE ---
-# Ahora importamos los modelos reales de tus otras apps
-# (Asegúrate que estas apps estén en tu INSTALLED_APPS en settings.py)
+# --- IMPORTACIONES ---
 try:
     from madre.models import Madre, TamizajeMaterno
     from parto.models import Parto, ModeloAtencionParto, RobsonParto
     from recien_nacido.models import RecienNacido, ProfiRN
     from auditoria.models import LogAccion
-    # Importamos el modelo de Catálogo para la consulta dinámica
     from catalogo.models import Catalogo
 except ImportError:
-    # Si hay un error de importación, usamos un truco para que Django pueda arrancar
     print("ADVERTENCIA: No se pudieron importar modelos de otras apps en reportes/services.py")
-    # Usamos un placeholder que fallará si se usa, pero permite que el servidor inicie
     Madre, TamizajeMaterno, Parto, ModeloAtencionParto, RobsonParto, RecienNacido, ProfiRN, LogAccion, Catalogo = (None,) * 9
 
 
 def get_datos_rem(anio, mes):
     """
-    Calcula los agregados para los reportes REM (A11, A21, A24)
-    para un año y mes específicos.
-    
-    --- 🟢 IMPLEMENTA LÓGICA DINÁMICA ---
-    Agrupa los partos por tipo automáticamente desde el Catálogo.
+    Calcula todos los agregados y desgloses para el reporte REM Consolidado.
     """
     print(f"Calculando REM para {anio}-{mes}")
     
-    # --- Consultas Base ---
+    # --- CONSULTAS BASE ---
     base_partos_mes = Parto.objects.filter(fecha__year=anio, fecha__month=mes)
     base_rn_mes = RecienNacido.objects.filter(parto__fecha__year=anio, parto__fecha__month=mes)
     madres_con_parto_ids = base_partos_mes.values_list('madre_id', flat=True)
     base_tamizajes_mes = TamizajeMaterno.objects.filter(madre_id__in=madres_con_parto_ids)
 
-    # === REM A11 (MADRE) ===
-    tamizajes_vih_positivos = base_tamizajes_mes.filter(
-        vih_resultado='POSITIVO'
-    ).count()
 
-    # === REM A21 (PARTO) ===
+    # === REM A11 (MADRE: VDRL, VIH, HBV) ===
+    
+    tamizajes_vih_positivos = base_tamizajes_mes.filter(vih_resultado='POSITIVO').count()
+    tamizajes_vdrl_positivos = base_tamizajes_mes.filter(vdrl_resultado='POSITIVO').count()
+    tamizajes_vdrl_con_tratamiento = base_tamizajes_mes.filter(
+        vdrl_resultado='POSITIVO',
+        vdrl_tratamiento=True
+    ).count()
+    tamizajes_hepb_positivos = base_tamizajes_mes.filter(hepb_resultado='POSITIVO').count()
+    
+
+    # === REM A21 (PARTO: Tipo, Robson y Acompañamiento) ===
     total_partos = base_partos_mes.count()
 
-    # 1. Desglose dinámico de Partos
+    # 1. Desglose dinámico de Partos (Tipo)
     partos_agrupados_por_tipo = base_partos_mes.values(
-        'tipo_parto__valor'  # Agrupa por el texto, ej: 'CESAREA', 'VAGINAL'
+        'tipo_parto__valor'  
     ).annotate(
-        total=Count('id')    # Cuenta cuántos hay en cada grupo
-    ).order_by('tipo_parto__valor') # Ordena alfabéticamente
+        total=Count('id')
+    ).order_by('tipo_parto__valor')
     
-    # 2. Datos de Modelo de Atención (REM A21)
+    # 2. Clasificación Robson (Usando el campo corregido)
+    partos_agrupados_por_robson = base_partos_mes.values(
+        'clasificacion_robson__grupo' 
+    ).annotate(
+        total=Count('id')
+    ).order_by('clasificacion_robson__grupo')
+    
+    # 3. Acompañamiento
     partos_con_acompanamiento = base_partos_mes.filter(
         Q(acompanamiento_trabajo_parto=True) | Q(acompanamiento_solo_expulsivo=True)
     ).count()
 
-    # --- 🟢 INICIO: CÁLCULO ROBSON (CORREGIDO) ---
-    # 3. Clasificación Robson
-    # (Usamos 'clasificacion_robson__grupo' que es el nombre de campo correcto)
-    partos_agrupados_por_robson = base_partos_mes.values(
-        'clasificacion_robson__grupo'
-    ).annotate(
-        total=Count('id')
-    ).order_by('clasificacion_robson__grupo')
-    # --- 🟢 FIN: CÁLCULO ROBSON ---
-    
-    # === REM A24 (RECIÉN NACIDO) ===
+
+    # === REM A24 (RN: Calidad y Profilaxis) ===
     total_rn = base_rn_mes.count()
+    
+    # 1. Lactancia
     rn_con_lm_60min = base_rn_mes.filter(lactancia_60min=True).count()
     
+    # 2. Indicadores de Calidad
+    rn_bajo_peso = base_rn_mes.filter(peso__lt=2500).count()
+    rn_apgar_bajo = base_rn_mes.filter(apgar_5__lt=7).count()
+    rn_con_reanimacion = base_rn_mes.filter(
+        Q(reanimacion_basica=True) | Q(reanimacion_avanzada=True)
+    ).count()
+    
+    # 3. Profilaxis (Asumiendo VITK y POF son valores de catálogo en ProfiRN.tipo)
+    rn_con_vitamina_k = ProfiRN.objects.filter(rn__in=base_rn_mes, tipo__valor='VITK').count()
+    rn_con_prof_oftalmica = ProfiRN.objects.filter(rn__in=base_rn_mes, tipo__valor='POF').count()
 
-    # Estructura de datos consolidada para la vista/template
+
+    # === CONSOLIDACIÓN DE DATOS ===
     datos_consolidados = {
         'periodo': f"{mes}-{anio}",
+        'rem_a11': {
+            'tamizajes_vih_positivos': tamizajes_vih_positivos,
+            'tamizajes_vdrl_positivos': tamizajes_vdrl_positivos,
+            'tamizajes_vdrl_con_tratamiento': tamizajes_vdrl_con_tratamiento,
+            'tamizajes_hepb_positivos': tamizajes_hepb_positivos,
+        },
         'rem_a21': {
             'total_partos': total_partos,
             'desglose_partos': list(partos_agrupados_por_tipo),
-            'desglose_robson': list(partos_agrupados_por_robson), # <-- Añadido
+            'desglose_robson': list(partos_agrupados_por_robson),
             'partos_con_acompanamiento': partos_con_acompanamiento,
         },
         'rem_a24': {
             'total_rn': total_rn,
             'rn_con_lm_60min': rn_con_lm_60min,
-        },
-        'rem_a11': {
-            'tamizajes_vih_positivos': tamizajes_vih_positivos,
+            'rn_bajo_peso': rn_bajo_peso,
+            'rn_apgar_bajo': rn_apgar_bajo,
+            'rn_con_reanimacion': rn_con_reanimacion,
+            'rn_con_vitamina_k': rn_con_vitamina_k,
+            'rn_con_prof_oftalmica': rn_con_prof_oftalmica,
         },
         'indicadores_h2_h3': {
-            'h2_parto_vertical': 0, # (cálculo pendiente)
-            'h3_cesarea_g1_g10': 0, # (cálculo pendiente)
+            'h2_parto_vertical': 0, 
+            'h3_cesarea_g1_g10': 0,
         }
     }
     
     return datos_consolidados
 
 def get_datos_servicio_salud(anio, trimestre):
-    """
-    Calcula los agregados para el reporte del Servicio de Salud Ñuble.
-    """
+    # ... (código sin cambios) ...
     print(f"Calculando SS Ñuble para {anio}-T{trimestre}")
     
     # Mapeo de meses por trimestre
@@ -135,7 +150,7 @@ def get_datos_servicio_salud(anio, trimestre):
     
     vhb_completas = ProfiRN.objects.filter(
         rn__in=rn_trimestre, 
-        tipo='VHB'
+        tipo__valor='VHB' 
     ).count()
     
     cumplimiento_vhb = (vhb_completas / total_rn_trimestre * 100) if total_rn_trimestre > 0 else 0
@@ -174,9 +189,7 @@ def get_datos_servicio_salud(anio, trimestre):
     return datos_consolidados
 
 def get_datos_calidad():
-    """
-    Ejecuta chequeos de consistencia de datos (Control de Calidad).
-    """
+    # ... (código sin cambios) ...
     print("Ejecutando chequeos de calidad...")
     
     inconsistencias = []

@@ -47,19 +47,19 @@
                     </td>
                     <td>
                         {% if rn.sexo == 'F' %}
-                        <span class="badge bg-pink-subtle text-pink-emphasis">
+                        <span class="badge text-bg-danger">
                             {{ rn.get_sexo_display }}
                         </span>
                         {% elif rn.sexo == 'M' %}
-                        <span class="badge bg-primary-subtle text-primary-emphasis">
+                        <span class="badge text-bg-primary">
                             {{ rn.get_sexo_display }}
                         </span>
                         {% else %}
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                        <span class="badge text-bg-secondary">
                             {{ rn.get_sexo_display }}
                         </span>
                         {% endif %}
-                    </td>
+                        </td>
                     <td>{{ rn.peso }}g</td>
                     <td>{{ rn.apgar_5 }}</td>
                     <td>

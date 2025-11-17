@@ -6,7 +6,8 @@
 
     <div class="container mt-5">
       <div class="row g-4">
-        <div class="col-lg-6">
+
+        <div class="col-md-6 col-lg-4">
           <a href="{% url 'madre_lista' %}" class="card-link">
             <div class="card h-100 p-3">
               <div class="card-body">
@@ -22,7 +23,7 @@
           </a>
         </div>
 
-        <div class="col-lg-6">
+        <div class="col-md-6 col-lg-4">
           <a href="{% url 'recien_nacido:rn_lista' %}" class="card-link">
             <div class="card h-100 p-3">
               <div class="card-body">
@@ -38,30 +39,14 @@
           </a>
         </div>
 
-        <div class="col-lg-6">
-          <a href="#" class="card-link">
-            <div class="card h-100 p-3">
-              <div class="card-body">
-                <div class="card-icon icon-green">
-                  <i class="bi bi-check-lg"></i>
-                </div>
-                <h5 class="card-title">Validar Alta</h5>
-                <p class="card-text text-muted">
-                  Verificación de datos antes del alta hospitalaria
-                </p>
-              </div>
-            </div>
-          </a>
-        </div>
-
-        <div class="col-lg-6">
+        <div class="col-md-6 col-lg-4">
           <a href="{% url 'reportes:reportes_menu' %}" class="card-link">
             <div class="card h-100 p-3">
               <div class="card-body">
                 <div class="card-icon icon-purple">
                   <i class="bi bi-file-earmark-bar-graph"></i>
                 </div>
-                <h5 class="card-title">Reportes REM A24</h5>
+                <h5 class="card-title">Reportes REM</h5>
                 <p class="card-text text-muted">
                   Generación de reportes estadísticos ministeriales
                 </p>
@@ -69,6 +54,7 @@
             </div>
           </a>
         </div>
+
       </div>
     </div>
   </body>

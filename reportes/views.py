@@ -2,11 +2,14 @@
 from django.shortcuts import render
 from django.views.generic.base import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models.functions import ExtractYear # 🟢 Para extraer el año
+import datetime
 
-# --- 🟢 MODIFICADO: Importamos los forms actualizados ---
+# --- Importamos los forms y modelos necesarios ---
 from .forms import FiltroReporteREMForm, FiltroReporteServicioSaludForm
 from . import services
 from . import export
+from parto.models import Parto # 🟢 Importamos el modelo Parto para consultar los años
 
 class ReportesMenuView(LoginRequiredMixin, TemplateView):
     """
@@ -17,12 +20,37 @@ class ReportesMenuView(LoginRequiredMixin, TemplateView):
 class ReporteREMView(LoginRequiredMixin, TemplateView):
     """
     Vista para el reporte REM (A11, A21, A24).
-    Maneja la visualización HTML y la exportación (Excel/PDF).
     """
     template_name = 'reportes/reportes_rem.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # --- 🟢 INICIO DE LA CORRECCIÓN DINÁMICA ---
+        
+        # 1. Obtener AÑOS dinámicamente desde la base de datos (Modelo Parto)
+        #    Esto busca todos los años distintos donde existe al menos un parto.
+        anios_con_datos = Parto.objects.annotate(
+            anio_parto=ExtractYear('fecha')
+        ).values_list('anio_parto', flat=True).distinct().order_by('-anio_parto')
+        
+        context['anios_disponibles'] = list(anios_con_datos)
+        
+        # 2. Los MESES son estáticos (Enero-Diciembre)
+        context['meses_disponibles'] = [
+            (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+            (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+            (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+        ]
+
+        # 3. Obtener los valores seleccionados (si existen)
+        selected_anio = self.request.GET.get('anio')
+        selected_mes = self.request.GET.get('mes')
+        context['selected_anio'] = selected_anio
+        context['selected_mes'] = selected_mes
+        context['vista_elegida'] = self.request.GET.get('vista', 'CONSOLIDADO') # (Mantenemos la lógica del filtro de vista)
+
+        # 4. Procesar el formulario
         form = FiltroReporteREMForm(self.request.GET or None)
         context['form'] = form
         
@@ -30,12 +58,9 @@ class ReporteREMView(LoginRequiredMixin, TemplateView):
             anio = form.cleaned_data['anio']
             mes = form.cleaned_data['mes']
             
-            # --- 🟢 (MODIFICACIÓN) ---
-            # Pasamos la vista elegida (ej: 'A11') al template
-            context['vista_elegida'] = form.cleaned_data.get('vista', 'CONSOLIDADO')
-            
-            # El servicio sigue calculando todo igual, no cambia
             context['datos'] = services.get_datos_rem(anio, mes)
+        
+        # --- 🟢 FIN DE LA CORRECCIÓN ---
         
         return context
 
@@ -48,17 +73,13 @@ class ReporteREMView(LoginRequiredMixin, TemplateView):
             if form.is_valid():
                 anio = form.cleaned_data['anio']
                 mes = form.cleaned_data['mes']
-                # El servicio sigue calculando todo
                 datos = services.get_datos_rem(anio, mes)
                 
-                # NOTA: La exportación (PDF/Excel) seguirá siendo CONSOLIDADA.
-                # El filtro 'vista' por ahora solo afecta al HTML.
                 if export_format == 'excel':
                     return export.export_rem_excel(datos)
                 elif export_format == 'pdf':
                     return export.export_rem_pdf(datos)
-        
-        # Si no hay formato de exportación, renderiza la vista HTML
+
         return super().get(request, *args, **kwargs)
 
 
@@ -70,6 +91,15 @@ class ReporteServicioSaludView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # --- 🟢 Lógica dinámica de AÑOS también para este reporte ---
+        anios_con_datos = Parto.objects.annotate(
+            anio_parto=ExtractYear('fecha')
+        ).values_list('anio_parto', flat=True).distinct().order_by('-anio_parto')
+        context['anios_disponibles'] = list(anios_con_datos)
+        context['trimestres_disponibles'] = [('1', 'T1'), ('2', 'T2'), ('3', 'T3'), ('4', 'T4')]
+        # --- Fin Lógica dinámica ---
+        
         form = FiltroReporteServicioSaludForm(self.request.GET or None)
         context['form'] = form
         
@@ -78,7 +108,6 @@ class ReporteServicioSaludView(LoginRequiredMixin, TemplateView):
             trimestre = form.cleaned_data['trimestre']
             context['datos'] = services.get_datos_servicio_salud(anio, trimestre)
             
-            # (Opcional) Si usas gráficos JS, prepara los datos
             if 'datos' in context and 'grafico_cumplimiento' in context['datos']:
                 context['grafico_labels_json'] = context['datos']['grafico_cumplimiento']['labels']
                 context['grafico_data_json'] = context['datos']['grafico_cumplimiento']['data']
@@ -93,6 +122,5 @@ class ReporteCalidadView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Este reporte no suele necesitar filtro, corre sobre todos los datos
         context['datos'] = services.get_datos_calidad()
         return context

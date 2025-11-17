@@ -18,14 +18,26 @@ class MadreListView(ListView):
         # Usamos select_related para evitar N+1 al acceder a comuna/cesfam en la tabla
         qs = Madre.objects.select_related("comuna", "cesfam").filter(activo=True)
 
+        # --- 🟢 INICIO DE LA CORRECCIÓN (Añadir filtro RUT) ---
+        
+        # 1. Obtenemos todos los valores de los filtros
+        rut = self.request.GET.get("rut")
         comuna = self.request.GET.get("comuna")
         cesfam = self.request.GET.get("cesfam")
 
+        # 2. Aplicamos el filtro RUT (Nuevo)
+        if rut:
+            # Usamos 'icontains' para que la búsqueda no sea exacta (ej. 12345)
+            qs = qs.filter(rut__icontains=rut)
+
+        # 3. Aplicamos los filtros existentes
         if comuna:
             qs = qs.filter(comuna_id=comuna)
 
         if cesfam:
             qs = qs.filter(cesfam_id=cesfam)
+            
+        # --- 🟢 FIN DE LA CORRECCIÓN ---
 
         return qs
 
@@ -34,11 +46,14 @@ class MadreListView(ListView):
 
         from catalogo.models import Catalogo
 
+        # (Esto se mantiene igual, es para poblar los dropdowns)
         context["comunas"] = Catalogo.objects.filter(tipo="VAL_COMUNA", activo=True).order_by("valor")
         context["cesfams"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
 
         context["selected_comuna"] = self.request.GET.get("comuna", "")
         context["selected_cesfam"] = self.request.GET.get("cesfam", "")
+        
+        # (El template ya maneja el valor del RUT con {{ request.GET.rut }})
 
         return context
 
