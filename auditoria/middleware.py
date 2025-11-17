@@ -17,10 +17,10 @@ class ThreadLocalMiddleware:
     acceder a él desde los signals (donde no llega el request).
     """
 
-    def _init_(self, get_response):
+    def __init__(self, get_response):
         self.get_response = get_response
 
-    def _call_(self, request):
+    def __call__(self, request):
         _thread_locals.request = request
         response = self.get_response(request)
         return response
