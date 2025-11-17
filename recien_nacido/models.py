@@ -44,6 +44,14 @@ class RecienNacido(models.Model):
     reanimacion_avanzada = models.BooleanField("Reanimación Avanzada", default=False)
     clampeo_tardio = models.BooleanField("Clampeo Tardío de Cordón", default=False)
     lactancia_60min = models.BooleanField("Inicio Lactancia < 60 min", default=False)
+    
+    # --- 🟢 CAMPO AÑADIDO: NECESARIO PARA VALIDAR ALTA ---
+    fecha_alta = models.DateTimeField(
+        "Fecha y Hora de Alta (Egreso)", 
+        null=True, 
+        blank=True
+    )
+    # --- FIN CAMPO AÑADIDO ---
 
     # Campos de auditoría
     creado_por = models.ForeignKey(
@@ -65,6 +73,7 @@ class RecienNacido(models.Model):
 
 
 class ProfiRN(models.Model):
+    # ... (Resto del modelo ProfiRN sigue igual) ...
     """
     Modelo para la Profilaxis del RN (Vacunas/POG).
     Basado en rn_profilaxis.html (REM A11/J).
@@ -107,6 +116,7 @@ class ProfiRN(models.Model):
 
 
 class RNObservacion(models.Model):
+    # ... (Resto del modelo RNObservacion sigue igual) ...
     """
     Bitácora de observaciones del Recién Nacido.
     Basado en rn_observaciones.html.

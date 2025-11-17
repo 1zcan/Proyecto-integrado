@@ -5,18 +5,20 @@ from . import views
 app_name = 'recien_nacido'
 
 urlpatterns = [
-    # --- /rn/ ---
-    
     # rn_lista.html
     path('', views.RNListView.as_view(), name='rn_lista'),
     
-    # 🟢 NUEVA URL: Creación Unificada (Muestra el formulario para seleccionar Parto)
-    path('crear/', views.RNCreateView.as_view(), name='rn_crear'),
+    # 🟢 NUEVA URL SIMPLE DE CREACIÓN
+    path('crear/', views.RNCreateView.as_view(), name='rn_crear'), # <-- La vista RNCreateView maneja este flujo
     
-    # rn_form.html (para editar un RN existente)
+    # Lista de pendientes de alta
+    path('pendientes-alta/', views.RNAltaPendienteListView.as_view(), name='rn_pendientes_alta'),
+
+    # Edición
     path('<int:pk>/editar/', views.RNUpdateView.as_view(), name='rn_editar'),
 
-    # Sub-rutas según especificación (sin cambios)
+    # Sub-rutas
+    path('<int:pk>/validar-alta/', views.RNValidarAltaView.as_view(), name='rn_validar_alta'),
     path('<int:pk>/profilaxis/', views.RNProfilaxisView.as_view(), name='rn_profilaxis'),
     path('<int:pk>/observaciones/', views.RNObservacionesView.as_view(), name='rn_observaciones'),
 ]

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}RN Pendientes de Alta{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm border-0">
+    
+    <div class="card-header bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Recién Nacidos Pendientes de Validación de Alta</h2>
+            
+            <a href="{% url 'recien_nacido:rn_lista' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-list-columns"></i> Ver Listado Completo
+            </a>
+            
+        </div>
+    </div>
+
+    <div class="table-responsive rn-list-table">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Madre</th>
+                    <th scope="col">Fecha Parto</th>
+                    <th scope="col">Peso (g)</th>
+                    <th scope="col">APGAR 5'</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rn in recien_nacidos_pendientes %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ rn.parto.madre.nombre_completo }}</div>
+                        <div class="small text-muted">{{ rn.parto.madre.rut }}</div>
+                    </td>
+                    <td>
+                        <div class="small">{{ rn.parto.fecha|date:"d/m/Y" }}</div>
+                    </td>
+                    <td>{{ rn.peso|default:"N/A" }}g</td>
+                    <td>{{ rn.apgar_5|default:"N/A" }}</td>
+                    <td>
+                        <span class="badge bg-warning-subtle text-warning-emphasis">
+                            Pendiente Validación
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'recien_nacido:rn_validar_alta' rn.pk %}" class="btn btn-sm btn-success" title="Validar Alta">
+                            <i class="bi bi-check2-square"></i> Validar
+                        </a>
+                        <a href="{% url 'recien_nacido:rn_editar' rn.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Datos">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        🎉 No hay Recién Nacidos pendientes de Validación de Alta.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}
+
+
+{% block styles %}
+<style>
+    .rn-list-table table thead {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .rn-list-table table th {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+    }
+
+    .rn-list-table table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    
+    .rn-list-table .btn {
+        margin-right: 4px;
+    }
+</style>
+{% endblock %}

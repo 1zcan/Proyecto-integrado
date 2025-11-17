@@ -10,9 +10,15 @@
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Registros de Recién Nacidos</h2>
             
-            <a href="{% url 'recien_nacido:rn_crear' %}" class="btn btn-sm btn-primary">
-                <i class="bi bi-plus-circle"></i> Registrar Nuevo RN
-            </a>
+            <div class="btn-group" role="group">
+                <a href="{% url 'recien_nacido:rn_crear' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Registrar Nuevo RN
+                </a>
+
+                <a href="{% url 'recien_nacido:rn_pendientes_alta' %}" class="btn btn-sm btn-outline-success {% if recien_nacidos_pendientes_count == 0 %}disabled{% endif %}">
+                    <i class="bi bi-check2-square"></i> Validar Altas ({{ recien_nacidos_pendientes_count }})
+                </a>
+            </div>
             
         </div>
     </div>

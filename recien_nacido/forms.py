@@ -8,7 +8,7 @@ class RNForm(forms.ModelForm):
     """
     Formulario Unificado para Creación (selecciona Parto) y Edición.
     """
-    # 🟢 AÑADIDO: Campo Parto para la creación autónoma
+    # 🟢 CAMPO PARTO: Incluido para la creación autónoma
     parto = forms.ModelChoiceField(
         queryset=Parto.objects.filter(activo=True).order_by('-fecha', '-hora'), 
         label="Seleccionar Parto asociado",
@@ -18,7 +18,7 @@ class RNForm(forms.ModelForm):
     class Meta:
         model = RecienNacido
         fields = [
-            'parto', # <-- Incluido para la creación
+            'parto', 
             'sexo', 
             'peso', 
             'talla', 
@@ -44,15 +44,11 @@ class RNForm(forms.ModelForm):
             'apgar_5': forms.NumberInput(attrs={'class': 'form-control'}),
         }
     
-    # Resto de validaciones (clean methods)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Si el objeto ya existe (edición), ocultamos el campo 'parto' 
-        # para que no se pueda cambiar el Parto asociado
+        # 🟢 Ocultar el campo 'parto' si estamos en edición
         if self.instance.pk:
             self.fields['parto'].widget = forms.HiddenInput()
-
 
     def clean_apgar_1(self):
         data = self.cleaned_data['apgar_1']
@@ -66,12 +62,8 @@ class RNForm(forms.ModelForm):
             raise forms.ValidationError("El APGAR debe estar entre 0 y 10.")
         return data
 
-# --- El resto de formularios sigue igual ---
-
 class ProfiRNForm(forms.ModelForm):
-    """
-    Formulario para añadir Profilaxis (rn_profilaxis.html).
-    """
+    # ... (Formulario de Profilaxis sin cambios relevantes)
     tipo = forms.ModelChoiceField(
         queryset=Catalogo.objects.filter(tipo='PROFILAXIS_RN', activo=True),
         required=True,
@@ -98,9 +90,7 @@ class ProfiRNForm(forms.ModelForm):
         }
 
 class RNObservacionForm(forms.ModelForm):
-    """
-    Formulario simple para añadir una nueva observación (rn_observaciones.html).
-    """
+    # ... (Formulario de Observación sin cambios relevantes)
     class Meta:
         model = RNObservacion
         fields = ['texto']
