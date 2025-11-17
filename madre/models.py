@@ -34,6 +34,9 @@ class Madre(models.Model):
     modificado_en = models.DateTimeField(auto_now=True)
     activo = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
         return f"{self.nombre_completo} ({self.rut})"
 

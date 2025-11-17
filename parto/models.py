@@ -33,6 +33,8 @@ class Parto(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
     activo = models.BooleanField(default=True)
+    class Meta:
+        ordering = ['-id']
 
     def __str__(self):
         return f"Parto de {self.madre} - {self.fecha}"
