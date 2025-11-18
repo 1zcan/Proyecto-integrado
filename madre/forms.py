@@ -10,9 +10,12 @@ class MadreForm(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Cargar comunas y CESFAM dinámicamente
         self.fields['comuna'].queryset = Catalogo.objects.filter(
             tipo='VAL_COMUNA', activo=True
         ).order_by('orden', 'valor')
+
         self.fields['cesfam'].queryset = Catalogo.objects.filter(
             tipo='VAL_ESTABLECIMIENTO', activo=True
         ).order_by('orden', 'valor')
@@ -20,20 +23,22 @@ class MadreForm(forms.ModelForm):
         self.fields['comuna'].empty_label = "Seleccione una comuna"
         self.fields['cesfam'].empty_label = "Seleccione un establecimiento"
 
+        # Estilos
         for name, field in self.fields.items():
             if isinstance(field.widget, (forms.TextInput, forms.Select, forms.FileInput)):
                 field.widget.attrs.update({'class': 'form-control'})
 
+        # Checkbox estilo switch
         check_fields = ['migrante', 'pueblo_originario', 'discapacidad']
         for name in check_fields:
             if name in self.fields:
                 self.fields[name].widget.attrs.update({'class': 'form-check-input'})
 
+        # Fecha como date input HTML5
         if 'fecha_nacimiento' in self.fields:
             self.fields['fecha_nacimiento'].widget = forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             )
-
     class Meta:
         model = Madre
         fields = [
@@ -41,6 +46,7 @@ class MadreForm(forms.ModelForm):
             'comuna', 'cesfam', 'migrante', 'pueblo_originario',
             'discapacidad', 'documentos',
         ]
+
 
 
 class TamizajeMaternoForm(forms.ModelForm):
@@ -89,3 +95,16 @@ class MadreObservacionForm(forms.ModelForm):
             raise forms.ValidationError("Debe ingresar la clave para validar la observación.")
         # Aquí puedes agregar validación adicional si quieres verificar la clave contra el usuario
         return clave
+
+    def clean_rut(self):
+        rut = self.cleaned_data.get("rut", "").strip()
+
+        import re
+        pattern = r"^[0-9]{1,8}-[0-9Kk]{1}$"
+
+        if not re.match(pattern, rut):
+            raise forms.ValidationError(
+                "El RUT debe tener el formato 12345678-9 o 12345678-K"
+            )
+
+        return rut

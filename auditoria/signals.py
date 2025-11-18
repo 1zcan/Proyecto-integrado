@@ -50,7 +50,7 @@ def auditar_post_save(sender, instance, created, **kwargs):
     LogAccion.objects.create(
         usuario=get_current_user(),
         accion=LogAccion.ACCION_CREATE if created else LogAccion.ACCION_UPDATE,
-        modelo=sender._name_,
+        modelo=sender.__name__,
         objeto_id=str(getattr(instance, "pk", "")),
         detalle="",
         ip_address=get_client_ip(),

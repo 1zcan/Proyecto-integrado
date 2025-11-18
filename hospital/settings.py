@@ -57,7 +57,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "auditoria.middleware.ThreadLocalMiddleware",   # <--- AÑADE ESTA LÍNEA
+    "auditoria.middleware.ThreadLocalMiddleware",  
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

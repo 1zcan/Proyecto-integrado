@@ -85,4 +85,30 @@
         </button>
     </div>
 </form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const rutInput = document.getElementById("id_rut");
+    if (!rutInput) return;   // por si acaso el form no tiene rut
+
+    // Atributos HTML para validación del navegador
+    rutInput.setAttribute("pattern", "^[0-9]{1,8}-[0-9Kk]{1}$");
+    rutInput.setAttribute("title", "Formato válido: 12345678-9 o 12345678-K");
+    rutInput.setAttribute("maxlength", "10");
+    rutInput.setAttribute("placeholder", "12345678-9");
+
+    // Restricción mientras escribe: solo números, un guion, y un dígito o K/k
+    rutInput.addEventListener("input", function () {
+        let v = this.value;
+
+        // Permitir solo números, K/k y guion
+        v = v.replace(/[^0-9kK\-]/g, "");
+
+        // Evitar más de un guion
+        v = v.replace(/(\-.*)\-/g, "$1");
+
+        this.value = v;
+    });
+});
+</script>
 {% endblock %}
