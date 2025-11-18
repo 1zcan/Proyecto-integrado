@@ -66,7 +66,7 @@ def auditar_post_delete(sender, instance, **kwargs):
     LogAccion.objects.create(
         usuario=get_current_user(),
         accion=LogAccion.ACCION_DELETE,
-        modelo=sender._name_,
+        modelo=sender.__name__,
         objeto_id=str(getattr(instance, "pk", "")),
         detalle="Borrado físico",
         ip_address=get_client_ip(),
