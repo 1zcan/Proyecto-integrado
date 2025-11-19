@@ -17,7 +17,7 @@
                     <i class="bi bi-plus-circle"></i> Registrar Nuevo RN
                 </a>
 
-                {% if rol == 'profesional_salud' %}
+                {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
                 <a href="{% url 'recien_nacido:rn_pendientes_alta' %}" 
                    class="btn btn-sm btn-outline-success {% if recien_nacidos_pendientes_count == 0 %}disabled{% endif %}">
                     <i class="bi bi-check2-square"></i> Validar Altas ({{ recien_nacidos_pendientes_count }})
@@ -69,7 +69,7 @@
                             <i class="bi bi-clipboard-data-fill"></i>
                         </a>
 
-                        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' %}
+                        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
                             <a href="{% url 'recien_nacido:rn_profilaxis' rn.pk %}" 
                                class="btn btn-sm btn-outline-success" title="Profilaxis (Vacunas)">
                                 <i class="bi bi-shield-check"></i>
