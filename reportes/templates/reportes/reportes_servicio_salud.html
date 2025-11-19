@@ -12,10 +12,12 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label for="{{ form.anio.id_for_label }}" class="form-label">Año</label>
-                    {{ form.anio }} </div>
+                    {{ form.anio }}
+                </div>
                 <div class="col-md-4">
                     <label for="{{ form.trimestre.id_for_label }}" class="form-label">Trimestre</label>
-                    {{ form.trimestre }} </div>
+                    {{ form.trimestre }}
+                </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-filter"></i> Generar Reporte
@@ -32,11 +34,9 @@
             <h5 class="mb-0">Resultados para {{ datos.periodo }}</h5>
         </div>
         <div class="card-body p-4">
-            
             <div class="row g-4">
-                
+                <!-- Columna izquierda: indicadores y tabla -->
                 <div class="col-md-7">
-                    
                     <h5 class="fw-bold mb-3">Indicadores Clave</h5>
                     <div class="row g-3">
                         <div class="col-sm-6">
@@ -51,7 +51,9 @@
                             <div class="card bg-light">
                                 <div class="card-body text-center">
                                     <h6 class="text-muted small">% Cumplimiento Profilaxis VHB</h6>
-                                    <div class="h3 fw-bold text-success">{{ datos.cumplimiento_profilaxis_vhb }}%</div>
+                                    <div class="h3 fw-bold text-success">
+                                        {{ datos.cumplimiento_profilaxis_vhb }}%
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -61,60 +63,41 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Menor de 15 años
-                            <span class="badge bg-primary rounded-pill">{{ datos.totales_por_edad.menor_15 }}</span>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ datos.totales_por_edad.menor_15 }}
+                            </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             15 a 19 años
-                            <span class="badge bg-primary rounded-pill">{{ datos.totales_por_edad.15_19 }}</span>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ datos.totales_por_edad.15_19 }}
+                            </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             20 a 34 años
-                            <span class="badge bg-primary rounded-pill">{{ datos.totales_por_edad.20_34 }}</span>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ datos.totales_por_edad.20_34 }}
+                            </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             35 y más años
-                            <span class="badge bg-primary rounded-pill">{{ datos.totales_por_edad.mayor_35 }}</span>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ datos.totales_por_edad.mayor_35 }}
+                            </span>
                         </li>
                     </ul>
                 </div>
-                
+
+                <!-- Columna derecha: gráfico -->
                 <div class="col-md-5">
                     <h5 class="fw-bold mb-3">Gráfico Cumplimiento</h5>
-                    <canvas id="graficoCumplimiento"></canvas>
+                    <div style="height: 260px;">
+                        <canvas id="graficoCumplimiento"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <script>
-        /*
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('graficoCumplimiento').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: {{ grafico_labels_json|safe }},
-                    datasets: [{
-                        label: '% Cumplimiento',
-                        data: {{ grafico_data_json|safe }},
-                        borderColor: '#007bff', // Azul de Bootstrap
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        fill: true,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
-                        }
-                    }
-                }
-            });
-        });
-        */
-    </script>
 
 {% elif request.GET.anio %}
     <div class="alert alert-info" role="alert">
@@ -125,14 +108,11 @@
         <p class="mb-0">Seleccione un año y un trimestre para generar el reporte.</p>
     </div>
 {% endif %}
-
 {% endblock %}
-
 
 {% block styles %}
 <style>
-    /* * 1. PARCHE PARA SELECTS (dentro de .reporte-ss-form)
-     */
+    /* Estilo de los selects del filtro */
     .reporte-ss-form select {
         display: block;
         width: 100%;
@@ -159,4 +139,59 @@
         box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
     }
 </style>
+{% endblock %}
+
+{% block scripts %}
+{% if datos and grafico_labels_json and grafico_data_json %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('graficoCumplimiento');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // Django inyecta JSON como string; lo parseamos aquí
+    const labels = JSON.parse('{{ grafico_labels_json|escapejs }}');
+    const data = JSON.parse('{{ grafico_data_json|escapejs }}');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '% Cumplimiento Profilaxis VHB',
+                data: data,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.15)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -186,7 +186,7 @@
             </a>
             
             <div class="d-flex align-items-center">
-                <!-- Indicador de usuario (opcional, puedes eliminarlo si prefieres) -->
+                <!-- Indicador de usuario -->
                 <div class="user-indicator d-none d-md-flex">
                     <div class="user-avatar">
                         {{ user.first_name|default:user.username|first|upper }}
@@ -253,12 +253,15 @@
             <br>
             <a href="{% url 'auditoria:log_list' %}" class="log">Registro de Auditoría</a>
         </small>
-        
     </footer>
     {% endif %}
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 📊 Chart.js disponible para todas las vistas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('.auto-dismiss');
