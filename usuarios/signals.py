@@ -3,18 +3,10 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import Perfil
 
-
 @receiver(post_save, sender=User)
-def crear_perfil_usuario(sender, instance, created, **kwargs):
-    """Crea un perfil automáticamente cuando se crea un usuario"""
+def gestionar_perfil_usuario(sender, instance, created, **kwargs):
     if created:
-        Perfil.objects.create(user=instance, rol='usuario')  
-
-
-@receiver(post_save, sender=User)
-def guardar_perfil_usuario(sender, instance, **kwargs):
-    """Guarda el perfil cuando se guarda el usuario"""
-    try:
-        instance.perfil.save()
-    except Perfil.DoesNotExist:
-        Perfil.objects.create(user=instance, rol='usuario')  
+        Perfil.objects.get_or_create(user=instance, defaults={'rol': 'usuario'})
+    else:
+        if hasattr(instance, 'perfil'):
+            instance.perfil.save()
