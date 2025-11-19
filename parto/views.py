@@ -1,15 +1,15 @@
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.decorators import method_decorator  # 👈 Necesario para los decoradores
-from usuarios.decorators import role_required  # 👈 Tu decorador personalizado
+from django.utils.decorators import method_decorator
+from usuarios.decorators import role_required
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
 from catalogo.models import Catalogo
 
-
-# Solo Profesionales de Salud y TI (Soporte). Administrativos BLOQUEADOS.
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+# LISTADO: Profesional, TI y TENS (Solo lectura para TENS)
+# Administrativos siguen BLOQUEADOS.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class PartoListView(ListView):
     model = Parto
     template_name = "parto/parto_lista.html"
@@ -21,37 +21,23 @@ class PartoListView(ListView):
 
         # --- FILTROS ---
         request = self.request.GET
-
-        # Filtro por fechas
         fecha_inicio = request.get("filtro_fecha_inicio")
         fecha_fin = request.get("filtro_fecha_fin")
-        if fecha_inicio:
-            qs = qs.filter(fecha__gte=fecha_inicio)
-        if fecha_fin:
-            qs = qs.filter(fecha__lte=fecha_fin)
-
-        # Filtro por tipo de parto
         tipo = request.get("filtro_tipo")
-        if tipo:
-            qs = qs.filter(tipo_parto_id=tipo)
-
-        # Filtro por establecimiento
         establecimiento = request.get("filtro_establecimiento")
-        if establecimiento:
-            qs = qs.filter(establecimiento_id=establecimiento)
+
+        if fecha_inicio: qs = qs.filter(fecha__gte=fecha_inicio)
+        if fecha_fin: qs = qs.filter(fecha__lte=fecha_fin)
+        if tipo: qs = qs.filter(tipo_parto_id=tipo)
+        if establecimiento: qs = qs.filter(establecimiento_id=establecimiento)
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tipos_parto"] = Catalogo.objects.filter(
-            tipo="VAL_TIPO_PARTO", activo=True
-        ).order_by("valor")
-        context["establecimientos"] = Catalogo.objects.filter(
-            tipo="VAL_ESTABLECIMIENTO", activo=True
-        ).order_by("valor")
-
-        # Mantener selección del usuario
+        context["tipos_parto"] = Catalogo.objects.filter(tipo="VAL_TIPO_PARTO", activo=True).order_by("valor")
+        context["establecimientos"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
+        
         context["selected_tipo"] = self.request.GET.get("filtro_tipo", "")
         context["selected_establecimiento"] = self.request.GET.get("filtro_establecimiento", "")
         context["selected_fecha_inicio"] = self.request.GET.get("filtro_fecha_inicio", "")
@@ -59,6 +45,8 @@ class PartoListView(ListView):
         return context
 
 
+# CREAR/EDITAR FICHA: Exclusivo Profesional (Responsable legal) y TI (Soporte).
+# TENS no crea partos.
 @method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class PartoCreateUpdateView(UpdateView):
     model = Parto
@@ -67,8 +55,26 @@ class PartoCreateUpdateView(UpdateView):
     success_url = reverse_lazy('parto_lista')
 
 
-# Exclusivo Clínico: Modelo de atención
-@method_decorator(role_required(['profesional_salud']), name='dispatch')
+# CREAR (Desde ficha madre): Exclusivo Profesional y TI.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+class PartoCreateView(CreateView):
+    model = Parto
+    form_class = PartoForm
+    template_name = 'parto/parto_form.html'
+
+    def get_initial(self):
+        return {'madre': self.kwargs['madre_id']}
+
+    def form_valid(self, form):
+        form.instance.madre_id = self.kwargs['madre_id']
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('parto_lista')
+
+
+# DATOS CLÍNICOS (Modelo Atención): Profesional y TI.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class ModeloAtencionUpdateView(UpdateView):
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
@@ -90,8 +96,8 @@ class ModeloAtencionUpdateView(UpdateView):
         return reverse_lazy('parto_lista')
 
 
-# Exclusivo Clínico: Clasificación Robson
-@method_decorator(role_required(['profesional_salud']), name='dispatch')
+# DATOS CLÍNICOS (Robson): Profesional y TI.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RobsonUpdateView(UpdateView):
     model = RobsonParto
     form_class = RobsonForm
@@ -113,7 +119,8 @@ class RobsonUpdateView(UpdateView):
         return reverse_lazy('parto_lista')
 
 
-# Firma Digital: Exclusivo Profesional de Salud (Requiere Login para validar clave)
+# FIRMA DIGITAL: Exclusivo Profesional de Salud (Médico/Matrona).
+# TI no firma, TENS no firma.
 @method_decorator(role_required(['profesional_salud']), name='dispatch')
 class PartoObservacionesView(LoginRequiredMixin, CreateView):
     model = PartoObservacion
@@ -140,20 +147,3 @@ class PartoObservacionesView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('parto_observaciones', kwargs={'parto_pk': self.kwargs['parto_pk']})
-
-
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
-class PartoCreateView(CreateView):
-    model = Parto
-    form_class = PartoForm
-    template_name = 'parto/parto_form.html'
-
-    def get_initial(self):
-        return {'madre': self.kwargs['madre_id']}
-
-    def form_valid(self, form):
-        form.instance.madre_id = self.kwargs['madre_id']
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse('parto_lista')

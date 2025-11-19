@@ -4,6 +4,8 @@
 
 {% block content %}
 
+{% with rol=user.perfil.rol %}
+
 <div class="card shadow-sm border-0">
     
     <div class="card-header bg-white py-3">
@@ -17,7 +19,6 @@
 
     <div class="card-body">
         
-        <!-- FORMULARIO DE FILTROS -->
         <form method="get" class="row g-3 align-items-end mb-4 parto-list-filters">
 
             <div class="col-md-3">
@@ -66,7 +67,6 @@
 
         </form>
 
-        <!-- TABLA -->
         <div class="table-responsive parto-list-table">
             <table class="table table-striped table-hover align-middle">
                 <thead>
@@ -92,18 +92,28 @@
                         <td>{{ parto.establecimiento.valor }}</td>
 
                         <td>
-                            <a href="{% url 'parto_editar' pk=parto.pk %}" class="btn btn-sm btn-outline-primary" title="Registro Clínico">
-                                <i class="bi bi-clipboard-data"></i>
-                            </a>
-                            <a href="{% url 'parto_modelo_atencion' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="REM A21">
-                                <i class="bi bi-person-check"></i>
-                            </a>
-                            <a href="{% url 'parto_robson' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="Robson">
-                                <i class="bi bi-bar-chart-steps"></i>
-                            </a>
-                            <a href="{% url 'parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-outline-warning" title="Observaciones">
+                            {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
+                                
+                                <a href="{% url 'parto_editar' pk=parto.pk %}" class="btn btn-sm btn-outline-primary" title="Registro Clínico">
+                                    <i class="bi bi-clipboard-data"></i>
+                                </a>
+
+                                <a href="{% url 'parto_modelo_atencion' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="REM A21">
+                                    <i class="bi bi-person-check"></i>
+                                </a>
+
+                                <a href="{% url 'parto_robson' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="Robson">
+                                    <i class="bi bi-bar-chart-steps"></i>
+                                </a>
+                                
+                            {% endif %}
+
+                            {% if rol == 'profesional_salud' %}
+                            <a href="{% url 'parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-outline-warning" title="Firmar Observaciones">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            {% endif %}
+
                         </td>
                     </tr>
                     {% empty %}
@@ -119,6 +129,8 @@
         </div>
     </div>
 </div>
+
+{% endwith %}
 
 {% endblock %}
 

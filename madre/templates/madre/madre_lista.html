@@ -4,6 +4,8 @@
 
 {% block content %}
 
+{% with rol=user.perfil.rol %}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0">Listado de Madres</h4>
@@ -11,65 +13,54 @@
     </div>
 
     <div class="d-flex gap-2">
-        <a href="{% url 'parto_lista' %}" class="btn btn-primary">
+        
+        <a href="{% url 'parto_lista' %}" class="btn btn-outline-primary">
             <i class="bi bi-baby"></i> Listado de Partos
         </a>
 
+        {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
         <a href="{% url 'madre_crear' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Registrar Nueva Madre
         </a>
+        {% endif %}
     </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
-            
             <div class="col-md-4">
-                <label for="filtro_rut" class="form-label small">RUT (sin puntos, con guion)</label>
-                <input type="text"
-                       name="rut"
-                       id="filtro_rut"
-                       class="form-control"
-                       placeholder="Ej: 12345678-9"
-                       pattern="^[0-9]{1,8}-[0-9Kk]{1}$"
-                       title="Formato válido: 12345678-9 o 12345678-K"
-                       maxlength="10"
-                       value="{{ request.GET.rut|default:'' }}">
+                <label for="filtro_rut" class="form-label small">RUT</label>
+                <input type="text" name="rut" id="filtro_rut" class="form-control"
+                       placeholder="Ej: 12345678-9" value="{{ request.GET.rut|default:'' }}">
             </div>
-
             <div class="col-md-3">
                 <label for="filtro_comuna" class="form-label small">Comuna</label>
                 <select name="comuna" id="filtro_comuna" class="form-select">
                     <option value="">Todas las Comunas</option>
                     {% for c in comunas %}
-                        <option value="{{ c.id }}" 
-                            {% if c.id|stringformat:"s" == selected_comuna %}selected{% endif %}>
+                        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_comuna %}selected{% endif %}>
                             {{ c.valor }}
                         </option>
                     {% endfor %}
                 </select>
             </div>
-
             <div class="col-md-3">
                 <label for="filtro_cesfam" class="form-label small">CESFAM</label>
                 <select name="cesfam" id="filtro_cesfam" class="form-select">
                     <option value="">Todos los CESFAM</option>
                     {% for ce in cesfams %}
-                        <option value="{{ ce.id }}" 
-                            {% if ce.id|stringformat:"s" == selected_cesfam %}selected{% endif %}>
+                        <option value="{{ ce.id }}" {% if ce.id|stringformat:"s" == selected_cesfam %}selected{% endif %}>
                             {{ ce.valor }}
                         </option>
                     {% endfor %}
                 </select>
             </div>
-
             <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
             </div>
-            
         </form>
     </div>
 </div>
@@ -84,7 +75,6 @@
                     <th>F. Nacimiento</th>
                     <th>Comuna</th>
                     <th>CESFAM</th>
-                    <th>Marcadores</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -98,48 +88,50 @@
                     <td>{{ madre.comuna.valor|default:"-" }}</td>
                     <td>{{ madre.cesfam.valor|default:"-" }}</td>
                     
-                    <td></td>
-                    
                     <td class="text-nowrap">
-
-                        <!-- Editar -->
+                        
+                        {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre_editar' pk=madre.pk %}" 
-                           class="btn btn-sm btn-outline-primary" title="Editar Ficha">
+                           class="btn btn-sm btn-outline-primary" title="Editar Datos Demográficos">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        {% endif %}
 
-                        <!-- Tamizajes -->
+                        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' %}
                         <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-warning" title="Ver Tamizajes">
                             <i class="bi bi-clipboard-pulse"></i>
                         </a>
+                        {% endif %}
 
-                        <!-- Observaciones -->
+                        {% if rol == 'profesional_salud' %}
                         <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" 
-                           class="btn btn-sm btn-outline-secondary" title="Ver Observaciones">
+                           class="btn btn-sm btn-outline-secondary" title="Firmar Observaciones">
                             <i class="bi bi-chat-text"></i>
                         </a>
+                        {% endif %}
                         
-                        <!-- 🗑 ELIMINAR MADRE -->
+                        {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
+                        <a href="{% url 'parto_crear_para_madre' madre.id %}" 
+                           class="btn btn-primary btn-sm ms-2" title="Agregar Parto">
+                            <i class="bi bi-plus-lg"></i> Parto
+                        </a>
+                        {% endif %}
+
+                        {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre_eliminar' pk=madre.pk %}" 
-                           class="btn btn-sm btn-outline-danger" title="Eliminar Madre">
+                           class="btn btn-sm btn-outline-danger ms-1" title="Eliminar Registro">
                             <i class="bi bi-trash"></i>
                         </a>
-
-                        <!-- Agregar Parto -->
-                        <a href="{% url 'parto_crear_para_madre' madre.id %}" 
-                           class="btn btn-primary btn-sm" title="Agregar Parto">
-                            <i class="bi bi-plus-lg"></i> Agregar Parto
-                        </a>
-
+                        {% endif %}
 
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                         <i class="bi bi-info-circle me-2"></i>
-                        No se encontraron registros de madres que coincidan con los filtros.
+                        No se encontraron registros.
                     </td>
                 </tr>
                 {% endfor %}
@@ -148,45 +140,16 @@
     </div>
 </div>
 
-<script>
+{% endwith %} <script>
 document.addEventListener("DOMContentLoaded", function () {
     const filtroRut = document.getElementById("filtro_rut");
-    if (!filtroRut) return;
-
-    filtroRut.addEventListener("input", function () {
-        let v = this.value;
-
-        // Solo números, K/k y guion
-        v = v.replace(/[^0-9kK\-]/g, "");
-
-        // Evitar más de un guion
-        v = v.replace(/(\-.*)\-/g, "$1");
-
-        this.value = v;
-    });
+    if (filtroRut) {
+        filtroRut.addEventListener("input", function () {
+            let v = this.value.replace(/[^0-9kK\-]/g, "").replace(/(\-.*)\-/g, "$1");
+            this.value = v;
+        });
+    }
 });
 </script>
 
-{% endblock %}
-
-{% block styles %}
-<style>
-    /* --- Estilos para la Tabla --- */
-    .table thead th {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 500;
-        vertical-align: middle;
-    }
-
-    .table .btn {
-        margin-right: 4px;
-    }
-
-    .btn i {
-        margin-right: 3px;
-        vertical-align: -1px;
-    }
-</style>
 {% endblock %}

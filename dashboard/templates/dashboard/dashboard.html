@@ -4,117 +4,138 @@
 
 {% block content %}
 
-    <div class="container mt-5">
-      <div class="row g-4">
+<div class="container mt-5">
+    {% with rol=user.perfil.rol %}
+    
+    <div class="row g-4">
 
+        {# TARJETA 1: GESTIÓN DE USUARIOS (Solo TI) #}
+        {% if rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-          <a href="{% url 'madre_lista' %}" class="card-link">
-            <div class="card h-100 p-3">
-              <div class="card-body">
-                <div class="card-icon icon-pink">
-                  <i class="bi bi-person-plus"></i>
+            <a href="{% url 'usuarios:registro' %}" class="card-link">
+                <div class="card h-100 p-3 border-warning"> <div class="card-body">
+                        <div class="card-icon icon-orange">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h5 class="card-title">Gestión de Usuarios</h5>
+                        <p class="card-text text-muted">
+                            Crear cuentas, asignar roles y seguridad.
+                        </p>
+                    </div>
                 </div>
-                <h5 class="card-title">Registrar Madre y Parto</h5>
-                <p class="card-text text-muted">
-                  Ingreso de datos maternos y del proceso de parto
-                </p>
-              </div>
-            </div>
-          </a>
+            </a>
         </div>
+        {% endif %}
 
+        {# TARJETA 2: MADRE Y PARTO #}
+        {# Acceso: Administrativo (Admisión), Profesional y Técnico #}
+        {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-          <a href="{% url 'recien_nacido:rn_lista' %}" class="card-link">
-            <div class="card h-100 p-3">
-              <div class="card-body">
-                <div class="card-icon icon-blue">
-                  <i class="bi bi-clipboard-plus"></i>
+            <a href="{% url 'madre_lista' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <div class="card-icon icon-pink">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h5 class="card-title">Registrar Madre y Parto</h5>
+                        <p class="card-text text-muted">
+                            {% if rol == 'administrativo' %}
+                                Ingreso de admisión y datos demográficos.
+                            {% else %}
+                                Ingreso de datos maternos y del proceso de parto.
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
-                <h5 class="card-title">Registrar Recién Nacido</h5>
-                <p class="card-text text-muted">
-                  Datos antropométricos y procedimientos del RN
-                </p>
-              </div>
-            </div>
-          </a>
+            </a>
         </div>
+        {% endif %}
 
+        {# TARJETA 3: RECIÉN NACIDO #}
+        {# Acceso: Profesional y Técnico. (Administrativo BLOQUEADO explícitamente) #}
+        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-          <a href="{% url 'reportes:reportes_menu' %}" class="card-link">
-            <div class="card h-100 p-3">
-              <div class="card-body">
-                <div class="card-icon icon-purple">
-                  <i class="bi bi-file-earmark-bar-graph"></i>
+            <a href="{% url 'recien_nacido:rn_lista' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <div class="card-icon icon-blue">
+                            <i class="bi bi-clipboard-plus"></i>
+                        </div>
+                        <h5 class="card-title">Registrar Recién Nacido</h5>
+                        <p class="card-text text-muted">
+                            Datos antropométricos y procedimientos del RN.
+                        </p>
+                    </div>
                 </div>
-                <h5 class="card-title">Reportes REM</h5>
-                <p class="card-text text-muted">
-                  Generación de reportes estadísticos ministeriales
-                </p>
-              </div>
-            </div>
-          </a>
+            </a>
         </div>
+        {% endif %}
 
-      </div>
+        {# TARJETA 4: REPORTES #}
+        {# Acceso: Profesional (Valida) y TI (Soporte/Datos) #}
+        {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'reportes:reportes_menu' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <div class="card-icon icon-purple">
+                            <i class="bi bi-file-earmark-bar-graph"></i>
+                        </div>
+                        <h5 class="card-title">Reportes REM</h5>
+                        <p class="card-text text-muted">
+                            Generación de reportes estadísticos ministeriales.
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
     </div>
-  </body>
-  <style>
+    {% endwith %}
+</div>
+
+<style>
     body {
-      background-color: #f8f9fa;
-    }
-    .log{
-        color: #6c757d; 
-        text-decoration: none; 
-        font-weight: 500; 
-        transition: color 0.2s ease; /
+        background-color: #f8f9fa;
     }
     .navbar {
-      background-color: #ffffff;
-      border-bottom: 1px solid #dee2e6;
+        background-color: #ffffff;
+        border-bottom: 1px solid #dee2e6;
     }
     .card-icon {
-      font-size: 2.5rem;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      display: inline-block;
-      margin-bottom: 1rem;
+        font-size: 2.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        display: inline-block;
+        margin-bottom: 1rem;
     }
-
-    .icon-pink {
-      color: #d63384;
-      background-color: #fce6f0;
-    }
-    .icon-blue {
-      color: #0d6efd;
-      background-color: #e7f0ff;
-    }
-    .icon-green {
-      color: #198754;
-      background-color: #e8f3ee;
-    }
-    .icon-purple {
-      color: #6f42c1;
-      background-color: #f1eefe;
-    }
+    .icon-pink { color: #d63384; background-color: #fce6f0; }
+    .icon-blue { color: #0d6efd; background-color: #e7f0ff; }
+    .icon-purple { color: #6f42c1; background-color: #f1eefe; }
+    
+    /* Estilo nuevo para TI */
+    .icon-orange { color: #fd7e14; background-color: #fff3cd; }
+    .border-warning { border: 1px solid #ffc107 !important; }
 
     .card {
-      border: none;
-      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-      transition: transform 0.2s;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.2s;
     }
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
     .card-link {
-      text-decoration: none;
-      color: inherit;
+        text-decoration: none;
+        color: inherit;
     }
     .card-link:hover .card-title {
-      color: #0d6efd;
+        color: #0d6efd;
     }
     .card-title {
-      font-weight: 600;
+        font-weight: 600;
     }
-  </style>
+</style>
 {% endblock %}
