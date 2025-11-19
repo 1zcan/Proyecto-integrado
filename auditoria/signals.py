@@ -52,7 +52,7 @@ def auditar_post_save(sender, instance, created, **kwargs):
         accion=LogAccion.ACCION_CREATE if created else LogAccion.ACCION_UPDATE,
         modelo=sender.__name__,
         objeto_id=str(getattr(instance, "pk", "")),
-        detalle="",
+
         ip_address=get_client_ip(),
         timestamp=timezone.now(),
     )
@@ -68,7 +68,7 @@ def auditar_post_delete(sender, instance, **kwargs):
         accion=LogAccion.ACCION_DELETE,
         modelo=sender.__name__,
         objeto_id=str(getattr(instance, "pk", "")),
-        detalle="Borrado físico",
+      
         ip_address=get_client_ip(),
         timestamp=timezone.now(),
     )

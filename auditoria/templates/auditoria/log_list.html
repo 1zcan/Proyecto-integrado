@@ -19,7 +19,7 @@
                     <th>Modelo</th>
                     <th>ID objeto</th>
                     <th>IP</th>
-                    <th>Detalle</th>
+            
                 </tr>
             </thead>
             <tbody>
@@ -45,7 +45,7 @@
                     <td>{{ log.modelo }}</td>
                     <td>{{ log.objeto_id }}</td>
                     <td class="text-nowrap">{{ log.ip_address|default:"-" }}</td>
-                    <td class="small text-muted">{{ log.detalle|default:"-" }}</td>
+                 
                 </tr>
             {% empty %}
                 <tr>
