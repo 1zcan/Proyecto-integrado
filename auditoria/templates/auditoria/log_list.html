@@ -8,6 +8,50 @@
     Registro de modificaciones sobre datos sensibles de pacientes, partos y recién nacidos.
 </p>
 
+<!-- Filtros -->
+<div class="card mb-3 shadow-sm border-0">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+
+      <div class="col-md-3">
+        <label class="form-label small">Modelo</label>
+        <input type="text"
+               name="modelo"
+               class="form-control"
+               placeholder="Ej: Madre, RecienNacido"
+               value="{{ filtro_modelo }}">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label small">Acción</label>
+        <select name="accion" class="form-select">
+          {% for value, label in acciones_disponibles %}
+            <option value="{{ value }}" {% if value == filtro_accion %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label small">Buscar en detalle / motivo</label>
+        <input type="text"
+               name="q"
+               class="form-control"
+               placeholder="Ej: 'Motivo', RUT, ID, texto..."
+               value="{{ filtro_q }}">
+      </div>
+
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">
+          <i class="bi bi-search"></i> Filtrar
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
 <div class="card shadow-sm card-audit">
     <div class="card-body p-0">
         <table class="table table-sm mb-0 align-middle table-hover">
@@ -19,14 +63,13 @@
                     <th>Modelo</th>
                     <th>ID objeto</th>
                     <th>IP</th>
-<<<<<<< Updated upstream
-            
-=======
->>>>>>> Stashed changes
+                    <th style="width: 260px;">Detalle / Motivo</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
             {% for log in logs %}
+                <!-- Fila principal -->
                 <tr>
                     <td class="text-nowrap">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
                     <td>{{ log.usuario|default:"-" }}</td>
@@ -48,14 +91,45 @@
                     <td>{{ log.modelo }}</td>
                     <td>{{ log.objeto_id }}</td>
                     <td class="text-nowrap">{{ log.ip_address|default:"-" }}</td>
-<<<<<<< Updated upstream
-                 
-=======
->>>>>>> Stashed changes
+
+                    <!-- Resumen del detalle, con "..." -->
+                    <td>
+                        <div class="small text-muted text-truncate" style="max-width: 250px;">
+                            {{ log.detalle|default:"-" }}
+                        </div>
+                    </td>
+
+                    <!-- Botón para ver más -->
+                    <td class="text-end text-nowrap">
+                        {% if log.detalle %}
+                        <button class="btn btn-sm btn-outline-secondary"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#logDetalle{{ log.id }}"
+                                aria-expanded="false"
+                                aria-controls="logDetalle{{ log.id }}">
+                            Ver detalle
+                        </button>
+                        {% endif %}
+                    </td>
                 </tr>
+
+                <!-- Fila colapsable con el detalle completo -->
+                {% if log.detalle %}
+                <tr class="collapse bg-light" id="logDetalle{{ log.id }}">
+                    <td colspan="8">
+                        <div class="p-3 small">
+                            <strong>Detalle completo:</strong><br>
+                            <span style="white-space: pre-wrap; word-break: break-word;">
+                                {{ log.detalle }}
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
             {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-3">
+                    <td colspan="8" class="text-center text-muted py-3">
                         Aún no hay registros de auditoría.
                     </td>
                 </tr>
@@ -70,7 +144,10 @@
   <ul class="pagination pagination-sm justify-content-end">
     {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        <a class="page-link"
+           href="?page={{ page_obj.previous_page_number }}{% if filtro_modelo %}&modelo={{ filtro_modelo }}{% endif %}{% if filtro_accion %}&accion={{ filtro_accion }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}">
+           Anterior
+        </a>
       </li>
     {% endif %}
     <li class="page-item disabled">
@@ -80,7 +157,10 @@
     </li>
     {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+        <a class="page-link"
+           href="?page={{ page_obj.next_page_number }}{% if filtro_modelo %}&modelo={{ filtro_modelo }}{% endif %}{% if filtro_accion %}&accion={{ filtro_accion }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}">
+           Siguiente
+        </a>
       </li>
     {% endif %}
   </ul>
@@ -88,24 +168,18 @@
 {% endif %}
 
 <style>
-    
     h4 {
         font-weight: 600;
         color: #212529;
     }
 
-  
     .card-audit {
         border: none;
         border-radius: 8px;
-        
-
-        overflow: hidden; 
+        overflow: hidden;
     }
 
-
     .card-audit .table thead {
-       
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
     }
@@ -113,34 +187,31 @@
     .card-audit .table th {
         font-weight: 500;
         color: #495057;
-        font-size: 0.8rem; 
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         padding-top: 0.75rem;
         padding-bottom: 0.75rem;
     }
 
-    
     .card-audit .table td {
         font-size: 0.9rem;
         color: #343a40;
-        vertical-align: middle; 
+        vertical-align: middle;
     }
-    
-  
+
     .badge {
         font-weight: 500;
     }
 
-    
     .pagination .page-link {
         border-radius: 4px;
         margin: 0 2px;
-        color: #007bff; 
+        color: #007bff;
     }
+
     .pagination .page-item.disabled .page-link {
         color: #6c757d;
     }
-
 </style>
 {% endblock %}

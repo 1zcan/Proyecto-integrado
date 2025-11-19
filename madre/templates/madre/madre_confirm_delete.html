@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Madre - Sistema Perinatal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <h5 class="mb-0">Confirmar eliminación de madre</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-1">
+            <strong>Madre:</strong> {{ madre.nombre_completo }} ({{ madre.rut }})
+          </p>
+          <p class="text-muted small">
+            Fecha de nacimiento: {{ madre.fecha_nacimiento|date:"d-m-Y" }}
+          </p>
+
+          {% if total_hijos > 0 %}
+          <div class="alert alert-warning">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Esta madre tiene <strong>{{ total_hijos }}</strong> recién nacido(s) asociado(s).<br>
+            <strong>Al eliminar la madre se eliminarán también TODOS los recién nacidos vinculados.</strong>
+          </div>
+
+          <ul class="list-group mb-3">
+            {% for rn in hijos %}
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold">
+                  RN ID {{ rn.id }} - {{ rn.get_sexo_display }}
+                </div>
+                <div class="small text-muted">
+                  Parto: {{ rn.parto.fecha|date:"d-m-Y" }} |
+                  Peso: {{ rn.peso }} g |
+                  APGAR 5': {{ rn.apgar_5 }}
+                </div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Esta madre actualmente no tiene recién nacidos asociados.
+          </div>
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Motivo de eliminación</label>
+              {{ form.razon }}
+              {% if form.razon.errors %}
+              <div class="text-danger small mt-1">
+                {{ form.razon.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Clave de firma</label>
+              {{ form.clave_firma }}
+              <div class="form-text">
+                Escriba su contraseña de usuario para confirmar la eliminación.
+              </div>
+              {% if form.clave_firma.errors %}
+              <div class="text-danger small mt-1">
+                {{ form.clave_firma.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'madre_lista' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash-fill me-1"></i> Eliminar definitivamente
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

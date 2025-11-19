@@ -9,6 +9,7 @@ urlpatterns = [
     # Formularios de Madre (Crear/Editar)
     path('nueva/', views.MadreCreateView.as_view(), name='madre_crear'),
     path('<int:pk>/editar/', views.MadreUpdateView.as_view(), name='madre_editar'),
+    path('<int:pk>/eliminar/', views.MadreDeleteView.as_view(), name='madre_eliminar'),
     
     # Formulario de Tamizajes (REM A11)
     path('<int:madre_pk>/tamizajes/', views.TamizajeCreateUpdateView.as_view(), name='madre_tamizajes'),

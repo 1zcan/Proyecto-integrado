@@ -123,3 +123,46 @@ class MadreObservacionForm(forms.ModelForm):
             raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
 
         return clave
+
+
+class MadreDeleteForm(forms.Form):
+    """
+    Formulario para eliminar una madre:
+    - Pide motivo
+    - Pide clave de firma (contraseña del usuario)
+    """
+    razon = forms.CharField(
+        label="Motivo de eliminación",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Explique brevemente por qué se elimina esta madre..."
+            }
+        ),
+        required=True,
+    )
+    clave_firma = forms.CharField(
+        label="Clave de firma",
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+        help_text="Ingrese su contraseña de usuario para confirmar la eliminación.",
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+    def clean_clave_firma(self):
+        clave = self.cleaned_data.get("clave_firma")
+
+        if not clave:
+            raise forms.ValidationError("Debe ingresar la clave para validar la eliminación.")
+
+        if self.user is None or not self.user.is_authenticated:
+            raise forms.ValidationError("Debe iniciar sesión para poder eliminar registros.")
+
+        if not self.user.check_password(clave):
+            raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
+
+        return clave

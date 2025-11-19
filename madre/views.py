@@ -1,9 +1,16 @@
 # madre/views.py
-from django.views.generic import ListView, CreateView, UpdateView
+from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic import ListView, CreateView, UpdateView, View
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin  # 👈 NUEVO
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+
 from .models import Madre, TamizajeMaterno, MadreObservacion
-from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm
+from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm, MadreDeleteForm
+
+from recien_nacido.models import RecienNacido
+from auditoria.models import LogAccion
+from auditoria.signals import get_client_ip
 
 
 class MadreListView(ListView):
@@ -105,7 +112,7 @@ class MadreObservacionesView(LoginRequiredMixin, CreateView):
         pueda validar la clave de firma contra su contraseña real.
         """
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # 👈 CLAVE PARA LA VALIDACIÓN
+        kwargs['user'] = self.request.user  # CLAVE PARA LA VALIDACIÓN
         return kwargs
 
     def form_valid(self, form):
@@ -118,7 +125,7 @@ class MadreObservacionesView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
         context['madre'] = madre
-        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones (si lo usas)
+        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones
         return context
 
     def get_success_url(self):
@@ -127,3 +134,86 @@ class MadreObservacionesView(LoginRequiredMixin, CreateView):
             'madre_observaciones',
             kwargs={'madre_pk': self.kwargs['madre_pk']}
         )
+
+
+class MadreDeleteView(LoginRequiredMixin, View):
+    """
+    Vista para eliminar una Madre.
+
+    Lógica:
+    - Pide motivo + clave de firma (contraseña del usuario).
+    - Muestra advertencia si tiene RN asociados.
+    - Al confirmar:
+        * Se eliminan los Partos de esa madre.
+        * Por cascada, se eliminan los RN de esos partos.
+        * Luego se elimina la propia Madre.
+    - Todo queda registrado en LogAccion (auditoría).
+    """
+    template_name = "madre/madre_confirm_delete.html"
+
+    def get(self, request, pk):
+        madre = get_object_or_404(Madre, pk=pk, activo=True)
+        hijos = RecienNacido.objects.filter(parto__madre=madre)
+
+        form = MadreDeleteForm(user=request.user)
+
+        context = {
+            "madre": madre,
+            "hijos": hijos,
+            "total_hijos": hijos.count(),
+            "form": form,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, pk):
+        madre = get_object_or_404(Madre, pk=pk, activo=True)
+        hijos = RecienNacido.objects.filter(parto__madre=madre)
+
+        form = MadreDeleteForm(request.POST, user=request.user)
+        if not form.is_valid():
+            context = {
+                "madre": madre,
+                "hijos": hijos,
+                "total_hijos": hijos.count(),
+                "form": form,
+            }
+            return render(request, self.template_name, context)
+
+        razon = form.cleaned_data["razon"]
+
+        # Construir detalle para la auditoría
+        detalle = (
+            f"Eliminación de Madre ID={madre.id}, RUT={madre.rut}, "
+            f"Nombre={madre.nombre_completo}. Motivo: {razon}. "
+            f"Total RN asociados eliminados: {hijos.count()}."
+        )
+
+        if hijos.exists():
+            lista_hijos = ", ".join(
+                [
+                    f"RN ID={rn.id} (Parto ID={rn.parto_id}, Sexo={rn.get_sexo_display()}, Peso={rn.peso}g)"
+                    for rn in hijos
+                ]
+            )
+            detalle += f" Detalle RN: {lista_hijos}"
+
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_DELETE,
+            modelo="Madre",
+            objeto_id=str(madre.pk),
+            detalle=detalle,
+            ip_address=get_client_ip(),
+        )
+
+        # 1) Eliminar partos (esto cascadeará a RecienNacido por on_delete=CASCADE)
+        madre.partos.all().delete()
+
+        # 2) Eliminar la madre
+        madre.delete()
+
+        messages.success(
+            request,
+            "Madre eliminada correctamente. Todos los recién nacidos asociados también fueron eliminados."
+        )
+        return redirect("madre_lista")

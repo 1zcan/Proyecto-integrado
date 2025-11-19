@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Recién Nacido - Sistema Perinatal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <h5 class="mb-0">Confirmar eliminación de Recién Nacido</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-1">
+            <strong>Madre:</strong> {{ rn.parto.madre.nombre_completo }} ({{ rn.parto.madre.rut }})
+          </p>
+          <p class="mb-1">
+            <strong>Parto:</strong> {{ rn.parto.fecha|date:"d-m-Y" }} a las {{ rn.parto.hora }}
+          </p>
+          <p class="mb-3">
+            <strong>RN:</strong> ID {{ rn.id }} - {{ rn.get_sexo_display }} |
+            Peso: {{ rn.peso }} g | APGAR 5': {{ rn.apgar_5 }}
+          </p>
+
+          <div class="alert alert-warning">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Esta acción <strong>eliminará únicamente</strong> el registro de este recién nacido.<br>
+            La ficha de la madre y otros RN asociados a la misma madre <strong>NO se verán afectados</strong>.
+          </div>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Motivo de eliminación</label>
+              {{ form.razon }}
+              {% if form.razon.errors %}
+              <div class="text-danger small mt-1">
+                {{ form.razon.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Clave de firma</label>
+              {{ form.clave_firma }}
+              <div class="form-text">
+                Escriba su contraseña de usuario para confirmar la eliminación.
+              </div>
+              {% if form.clave_firma.errors %}
+              <div class="text-danger small mt-1">
+                {{ form.clave_firma.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'recien_nacido:rn_lista' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash-fill me-1"></i> Eliminar definitivamente
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

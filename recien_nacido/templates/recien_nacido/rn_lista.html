@@ -15,7 +15,8 @@
                     <i class="bi bi-plus-circle"></i> Registrar Nuevo RN
                 </a>
 
-                <a href="{% url 'recien_nacido:rn_pendientes_alta' %}" class="btn btn-sm btn-outline-success {% if recien_nacidos_pendientes_count == 0 %}disabled{% endif %}">
+                <a href="{% url 'recien_nacido:rn_pendientes_alta' %}" 
+                   class="btn btn-sm btn-outline-success {% if recien_nacidos_pendientes_count == 0 %}disabled{% endif %}">
                     <i class="bi bi-check2-square"></i> Validar Altas ({{ recien_nacidos_pendientes_count }})
                 </a>
             </div>
@@ -59,18 +60,35 @@
                             {{ rn.get_sexo_display }}
                         </span>
                         {% endif %}
-                        </td>
+                    </td>
                     <td>{{ rn.peso }}g</td>
                     <td>{{ rn.apgar_5 }}</td>
-                    <td>
-                        <a href="{% url 'recien_nacido:rn_editar' rn.pk %}" class="btn btn-sm btn-outline-primary" title="Atención Inmediata">
+
+                    <td class="text-nowrap">
+                        <!-- Editar -->
+                        <a href="{% url 'recien_nacido:rn_editar' rn.pk %}" 
+                           class="btn btn-sm btn-outline-primary" title="Atención Inmediata">
                             <i class="bi bi-clipboard-data-fill"></i>
                         </a>
-                        <a href="{% url 'recien_nacido:rn_profilaxis' rn.pk %}" class="btn btn-sm btn-outline-success" title="Profilaxis">
+
+                        <!-- Profilaxis -->
+                        <a href="{% url 'recien_nacido:rn_profilaxis' rn.pk %}" 
+                           class="btn btn-sm btn-outline-success" title="Profilaxis">
                             <i class="bi bi-shield-check"></i>
                         </a>
-                        <a href="{% url 'recien_nacido:rn_observaciones' rn.pk %}" class="btn btn-sm btn-outline-info" title="Observaciones">
+                        
+                        <!-- 🗑 Eliminar RN -->
+                        <a href="{% url 'recien_nacido:rn_eliminar' rn.pk %}" 
+                           class="btn btn-sm btn-outline-danger" title="Eliminar RN">
+                            <i class="bi bi-trash"></i>
+
+                        <!-- Observaciones -->
+                        <a href="{% url 'recien_nacido:rn_observaciones' rn.pk %}" 
+                           class="btn btn-sm btn-outline-info" title="Observaciones">
                             <i class="bi bi-eye-fill"></i>
+                        </a>
+
+
                         </a>
                     </td>
                 </tr>
@@ -85,6 +103,7 @@
         </table>
     </div>
 </div>
+
 {% endblock content %}
 
 
@@ -111,7 +130,6 @@
         vertical-align: middle;
     }
 
-    
     .rn-list-table .btn {
         margin-right: 4px;
     }

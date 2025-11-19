@@ -1,17 +1,18 @@
 # recien_nacido/views.py
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, UpdateView, DetailView, CreateView
+from django.views.generic import ListView, UpdateView, DetailView, CreateView, View
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
-# Usamos timezone y messages para la vista de validación de alta
-from django.utils import timezone 
-from django.contrib import messages 
+from django.utils import timezone
+from django.contrib import messages
 
 from .models import RecienNacido, ProfiRN, RNObservacion
-# Importamos el formulario unificado (RNForm) y auxiliares
-from .forms import RNForm, ProfiRNForm, RNObservacionForm
+from .forms import RNForm, ProfiRNForm, RNObservacionForm, RNDeleteForm
 from parto.models import Parto
+
+from auditoria.models import LogAccion
+from auditoria.signals import get_client_ip
 
 
 # ================================================
@@ -35,17 +36,17 @@ class RNListView(LoginRequiredMixin, ListView):
 
 
 # ================================================
-#  🟢 2. LISTA DE RN PENDIENTES DE ALTA (Clase Faltante)
+#  2. LISTA DE RN PENDIENTES DE ALTA
 # ================================================
 class RNAltaPendienteListView(LoginRequiredMixin, ListView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_lista_pendientes_alta.html'
-    context_object_name = 'recien_nacidos_pendientes' 
-    
+    context_object_name = 'recien_nacidos_pendientes'
+
     def get_queryset(self):
         # Filtra solo los Recién Nacidos que no tienen fecha de alta (están pendientes)
         return RecienNacido.objects.filter(fecha_alta__isnull=True).select_related('parto', 'parto__madre')
-        
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_pending_list'] = True
@@ -53,18 +54,20 @@ class RNAltaPendienteListView(LoginRequiredMixin, ListView):
 
 
 # ================================================
-#  3. CREAR RECIÉN NACIDO (Flujo Único)
+#  3. CREAR RECIÉN NACIDO
 # ================================================
 class RNCreateView(LoginRequiredMixin, CreateView):
     model = RecienNacido
     form_class = RNForm
     template_name = 'recien_nacido/rn_form.html'
-    
+
     def get_success_url(self):
         return reverse('recien_nacido:rn_lista')
 
     def form_valid(self, form):
-        form.instance.creado_por = self.request.user
+        # Si tienes campo creado_por en el modelo, puedes setearlo aquí
+        if hasattr(form.instance, "creado_por"):
+            form.instance.creado_por = self.request.user
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -83,7 +86,7 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('recien_nacido:rn_lista')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_creating'] = False
@@ -188,9 +191,8 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
         return redirect(request.path_info)
 
 
-
 # ================================================
-#  6. PROFILAXIS Y OBSERVACIONES (Vistas ya existentes)
+#  6. PROFILAXIS
 # ================================================
 class RNProfilaxisView(LoginRequiredMixin, DetailView):
     model = RecienNacido
@@ -200,11 +202,10 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['profilaxis_form'] = ProfiRNForm()
-        
-        # --- 🟢 CORRECCIÓN APLICADA AQUÍ ---
+
         # Usamos el related_name correcto: 'profilaxis_set'
         context['profilaxis_list'] = self.object.profilaxis_set.all().select_related('tipo', 'registrado_por')
-        
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -223,8 +224,10 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
         return render(request, self.template_name, context)
 
 
+# ================================================
+#  7. OBSERVACIONES
+# ================================================
 class RNObservacionesView(LoginRequiredMixin, DetailView):
-    # ... (código sin cambios)
     model = RecienNacido
     template_name = 'recien_nacido/rn_observaciones.html'
     context_object_name = 'rn'
@@ -249,3 +252,64 @@ class RNObservacionesView(LoginRequiredMixin, DetailView):
         context = self.get_context_data()
         context['observacion_form'] = form
         return render(request, self.template_name, context)
+
+
+# ================================================
+#  8. ELIMINAR RECIÉN NACIDO
+# ================================================
+class RNDeleteView(LoginRequiredMixin, View):
+    """
+    Vista para eliminar un Recién Nacido.
+
+    - Solo se elimina el RN (y por cascada sus profilaxis y observaciones).
+    - La madre y otros RN de la misma madre NO se tocan.
+    - Requiere motivo + clave de firma.
+    - Registra todo en LogAccion.
+    """
+    template_name = "recien_nacido/rn_confirm_delete.html"
+
+    def get(self, request, pk):
+        rn = get_object_or_404(RecienNacido, pk=pk)
+        form = RNDeleteForm(user=request.user)
+
+        context = {
+            "rn": rn,
+            "form": form,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, pk):
+        rn = get_object_or_404(RecienNacido, pk=pk)
+        form = RNDeleteForm(request.POST, user=request.user)
+
+        if not form.is_valid():
+            context = {
+                "rn": rn,
+                "form": form,
+            }
+            return render(request, self.template_name, context)
+
+        razon = form.cleaned_data["razon"]
+
+        detalle = (
+            f"Eliminación de RN ID={rn.id}, "
+            f"Madre RUT={rn.parto.madre.rut}, Madre={rn.parto.madre.nombre_completo}. "
+            f"Motivo: {razon}."
+        )
+
+        LogAccion.objects.create(
+            usuario=request.user,
+            accion=LogAccion.ACCION_DELETE,
+            modelo="RecienNacido",
+            objeto_id=str(rn.pk),
+            detalle=detalle,
+            ip_address=get_client_ip(),
+        )
+
+        rn.delete()
+
+        messages.success(
+            request,
+            "Recién nacido eliminado correctamente. La ficha de la madre y otros RN asociados no fueron modificados."
+        )
+        return redirect("recien_nacido:rn_lista")

@@ -31,7 +31,6 @@
                 </div>
             {% endif %}
 
-            
             <h3 class="h6 mt-4">1. Datos de Contexto y Antropométricos</h3>
             <div class="row">
                 {% if is_creating %}
@@ -107,11 +106,44 @@
         </form>
     </div>
 </div>
+
+<!-- 🔹 JS para evitar valores negativos y limpiar comas en peso/talla/pc -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const numericFields = ["peso", "talla", "pc"];
+
+    numericFields.forEach(function (name) {
+        const input = document.querySelector('.rn-form input[name="' + name + '"]');
+        if (!input) return;
+
+        // Asegurar mínimos a nivel HTML (por si no vienen del widget)
+        if (name === "peso") {
+            input.setAttribute("min", "1");
+        } else {
+            input.setAttribute("min", "0.1");
+            input.setAttribute("step", "0.1");
+        }
+
+        input.addEventListener("input", function () {
+            let v = this.value;
+
+            // Reemplazar coma por punto para decimales
+            v = v.replace(",", ".");
+
+            // Eliminar signo negativo si se escribe
+            if (v.startsWith("-")) {
+                v = v.replace("-", "");
+            }
+
+            this.value = v;
+        });
+    });
+});
+</script>
 {% endblock %}
 
 {% block styles %}
 <style>
-    /* ... (Estilos CSS para rn-form, siguen igual) ... */
     .rn-form select,
     .rn-form input[type="text"],
     .rn-form input[type="number"],
