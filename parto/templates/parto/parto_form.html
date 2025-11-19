@@ -104,7 +104,8 @@
                 <i class="bi bi-check-lg"></i> Guardar Parto
             </button>
 
-            <a href="{% url 'madre_lista' %}" class="btn btn-secondary px-4">
+            {# CORRECCIÓN ⬇⬇⬇ #}
+            <a href="{% url 'madre:madre_lista' %}" class="btn btn-secondary px-4">
                 <i class="bi bi-x-lg"></i> Cancelar
             </a>
         </div>

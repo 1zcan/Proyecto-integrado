@@ -11,9 +11,12 @@
     <div class="card-header bg-white py-3">
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Listado de Partos Registrados</h2>
-            <a href="{% url 'madre_lista' %}" class="btn btn-outline-secondary btn-sm">
+
+            {# ANTES: madre_lista #}
+            <a href="{% url 'madre:madre_lista' %}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left"></i> Volver al Listado de Madres
             </a>
+
         </div>
     </div>
 
@@ -92,24 +95,29 @@
                         <td>{{ parto.establecimiento.valor }}</td>
 
                         <td>
+
                             {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
-                                
-                                <a href="{% url 'parto_editar' pk=parto.pk %}" class="btn btn-sm btn-outline-primary" title="Registro Clínico">
+
+                                {# ANTES: parto_editar #}
+                                <a href="{% url 'parto:parto_editar' pk=parto.pk %}" class="btn btn-sm btn-outline-primary" title="Registro Clínico">
                                     <i class="bi bi-clipboard-data"></i>
                                 </a>
 
-                                <a href="{% url 'parto_modelo_atencion' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="REM A21">
+                                {# ANTES: parto_modelo_atencion #}
+                                <a href="{% url 'parto:parto_modelo_atencion' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="REM A21">
                                     <i class="bi bi-person-check"></i>
                                 </a>
 
-                                <a href="{% url 'parto_robson' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="Robson">
+                                {# ANTES: parto_robson #}
+                                <a href="{% url 'parto:parto_robson' pk=parto.pk %}" class="btn btn-sm btn-outline-secondary" title="Robson">
                                     <i class="bi bi-bar-chart-steps"></i>
                                 </a>
                                 
                             {% endif %}
 
                             {% if rol == 'profesional_salud' %}
-                            <a href="{% url 'parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-outline-warning" title="Firmar Observaciones">
+                            {# ANTES: parto_observaciones #}
+                            <a href="{% url 'parto:parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-outline-warning" title="Firmar Observaciones">
                                 <i class="bi bi-eye"></i>
                             </a>
                             {% endif %}

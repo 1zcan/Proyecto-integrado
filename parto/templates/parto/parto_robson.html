@@ -17,7 +17,8 @@
                 <label class="form-label" for="{{ form.grupo.id_for_label }}">
                     {{ form.grupo.label }}
                 </label>
-                {{ form.grupo }} </div>
+                {{ form.grupo }}
+            </div>
 
             <hr class="my-3">
 
@@ -41,7 +42,8 @@
         <button type="submit" class="btn btn-success px-4">
             <i class="bi bi-check-lg"></i> Guardar Robson
         </button>
-        <a href="{% url 'parto_lista' %}" class="btn btn-outline-secondary px-4">
+        {# ⬇️ AQUÍ EL CAMBIO IMPORTANTE #}
+        <a href="{% url 'parto:parto_lista' %}" class="btn btn-outline-secondary px-4">
             <i class="bi bi-x-lg"></i> Volver al Listado
         </a>
     </div>
@@ -51,7 +53,6 @@
 
 {% block styles %}
 <style>
-   
     .robson-form select {
         display: block;
         width: 100%;
@@ -67,8 +68,6 @@
         background-size: 16px 12px;
         border: 1px solid #ced4da;
         border-radius: 0.375rem;
-        -webkit-appearance: none;
-        -moz-appearance: none;
         appearance: none;
     }
 
@@ -78,7 +77,6 @@
         box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
     }
 
-   
     .robson-form .form-check input[type="checkbox"] {
         width: 1em;
         height: 1em;
@@ -87,8 +85,6 @@
         background-color: #fff;
         border: 1px solid #ced4da;
         border-radius: 0.25em;
-        -webkit-appearance: none;
-        -moz-appearance: none;
         appearance: none;
     }
     
