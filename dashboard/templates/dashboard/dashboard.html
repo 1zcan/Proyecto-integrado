@@ -12,7 +12,8 @@
         {# 1. GESTIÓN DE USUARIOS (Solo TI) #}
         {% if rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-            <a href="{% url 'usuarios:registro' %}" class="card-link">
+            {# ANTES: usuarios:registro #}
+            <a href="{% url 'usuarios:gestion_usuarios' %}" class="card-link">
                 <div class="card h-100 p-3 border-warning">
                     <div class="card-body">
                         <div class="card-icon icon-orange">
@@ -28,11 +29,12 @@
         </div>
         {% endif %}
 
-        {# 2. AUDITORÍA (Solo TI) - NUEVA TARJETA #}
+        {# 2. AUDITORÍA (Solo TI) #}
         {% if rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'auditoria:log_list' %}" class="card-link">
-                <div class="card h-100 p-3 border-danger"> <div class="card-body">
+                <div class="card h-100 p-3 border-danger">
+                    <div class="card-body">
                         <div class="card-icon icon-red">
                             <i class="bi bi-journal-text"></i>
                         </div>
@@ -49,7 +51,8 @@
         {# 3. GESTIÓN DE MADRES (Admisión, Clínicos y TI) #}
         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-            <a href="{% url 'madre_lista' %}" class="card-link">
+            {# ANTES: 'madre_lista' sin namespace #}
+            <a href="{% url 'madre:madre_lista' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <div class="card-icon icon-pink">
@@ -72,7 +75,8 @@
         {# 4. GESTIÓN DE PARTOS (Clínicos y TI) #}
         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
-            <a href="{% url 'parto_lista' %}" class="card-link">
+            {# ANTES: 'parto_lista' sin namespace #}
+            <a href="{% url 'parto:parto_lista' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <div class="card-icon icon-green">
@@ -147,7 +151,6 @@
     .icon-purple { color: #6f42c1; background-color: #f1eefe; }
     .icon-green { color: #198754; background-color: #e8f3ee; }
     .icon-orange { color: #fd7e14; background-color: #fff3cd; }
-    /* Nuevo color para Auditoría */
     .icon-red { color: #dc3545; background-color: #f8d7da; }
 
     .border-warning { border: 1px solid #ffc107 !important; }

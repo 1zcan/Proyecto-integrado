@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Gestión de Usuarios</h1>
+
+    <!-- Formulario de creación -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Crear nuevo usuario
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.rol.label_tag }}
+                        {{ form.rol }}
+                        {% if form.rol.errors %}
+                            <div class="text-danger small">{{ form.rol.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.password1.label_tag }}
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.password2.label_tag }}
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">Crear usuario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="card">
+        <div class="card-header">
+            Usuarios registrados
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            {% if u.perfil %}
+                                {{ u.perfil.get_rol_display }}
+                            {% else %}
+                                <span class="text-muted">Sin perfil</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.user.id != u.id %}
+                                <a href="{% url 'usuarios:eliminar_usuario' u.id %}" class="btn btn-sm btn-danger">
+                                    Eliminar
+                                </a>
+                            {% else %}
+                                <span class="text-muted">No puedes eliminarte</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No hay usuarios registrados.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

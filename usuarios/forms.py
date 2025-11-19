@@ -104,3 +104,82 @@ class FotoPerfilForm(forms.ModelForm):
         widgets = {
             'foto': FileInput(attrs={'class': 'form-control'})
         }
+
+class AdminUserCreateForm(forms.ModelForm):
+    """
+    Formulario para que el administrador cree usuarios
+    con asignación de ROL + correo.
+    """
+    rol = forms.ChoiceField(
+        choices=Perfil.ROLES,
+        label="Rol"
+    )
+    password1 = forms.CharField(
+        label="Contraseña",
+        widget=forms.PasswordInput
+    )
+    password2 = forms.CharField(
+        label="Confirmar contraseña",
+        widget=forms.PasswordInput
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+        labels = {
+            'username': 'Usuario',
+            'email': 'Correo',
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Ya existe un usuario con ese nombre.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Ya existe un usuario con ese correo.")
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('password1')
+        p2 = cleaned_data.get('password2')
+
+        if p1 and p2 and p1 != p2:
+            self.add_error('password2', "Las contraseñas no coinciden.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        username = self.cleaned_data['username']
+        email = self.cleaned_data['email']
+        password = self.cleaned_data['password1']
+        rol = self.cleaned_data['rol']
+
+        # Crear usuario
+        user = User(
+            username=username,
+            email=email,
+            is_active=True,
+        )
+        user.set_password(password)
+
+        if commit:
+            user.save()
+
+            # ⚠️ IMPORTANTE ⚠️
+            # En vez de crear un perfil siempre, usamos get_or_create
+            perfil, creado = Perfil.objects.get_or_create(
+                user=user,
+                defaults={'rol': rol}
+            )
+
+            # Si el perfil ya existía (por SIGNAL), solo actualizamos el rol
+            if not creado:
+                perfil.rol = rol
+                perfil.save()
+
+        return user

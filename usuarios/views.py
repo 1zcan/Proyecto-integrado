@@ -1,41 +1,39 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-
 from django.core.mail import send_mail
 from django.urls import reverse
-
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
-
 import random
 
 from .models import Perfil, TwoFactorCode
-from .forms import RegistroForm, PerfilForm, FotoPerfilForm
+from .forms import RegistroForm, PerfilForm, FotoPerfilForm, AdminUserCreateForm
 
 
 # -------------------------------------------------------------------
 # REGISTRO + ACTIVACIÓN POR CORREO
 # -------------------------------------------------------------------
 def registro(request):
+    # 🔁 Si ya está logueado, lo mando al dashboard
     if request.user.is_authenticated:
-        return redirect('dashboard')  # como lo tenías antes
+        return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            # Aseguramos set_password (como ya hacías)
+            # Aseguramos set_password
             user.set_password(form.cleaned_data['password'])
-            #  👇 NUEVO: cuenta inactiva hasta activar por correo
+            # Cuenta inactiva hasta activar por correo
             user.is_active = False
             user.save()
             
-            # Si ya existe perfil (por señal o similar), fijamos rol
+            # Si ya existe perfil, fijamos rol por defecto
             if hasattr(user, 'perfil'):
                 user.perfil.rol = 'usuario'
                 user.perfil.save()
@@ -90,7 +88,6 @@ def activar_cuenta(request, uidb64, token):
         messages.success(request, 'Tu cuenta ha sido activada. Ya puedes iniciar sesión.')
         return redirect('usuarios:login')
     else:
-        # Puedes hacer un template más bonito para este caso
         messages.error(request, 'El enlace de activación es inválido o ha expirado.')
         return render(request, 'usuarios/activacion_invalida.html', {'hide_navigation': True})
 
@@ -114,13 +111,13 @@ def login_view(request):
                 context = {'form': form, 'hide_navigation': True}
                 return render(request, 'usuarios/login.html', context)
 
-            # 👇 NUEVO: verificar que la cuenta esté activada
+            # Verificar que la cuenta esté activada
             if not usuario.is_active:
                 messages.error(request, 'Tu cuenta aún no está activada. Revisa tu correo.')
                 context = {'form': form, 'hide_navigation': True}
                 return render(request, 'usuarios/login.html', context)
 
-            # 👇 NUEVO: generar código 2FA y enviarlo al correo
+            # Generar código 2FA y enviarlo al correo
             code = f"{random.randint(0, 999999):06d}"  # 6 dígitos
             TwoFactorCode.objects.create(user=usuario, code=code)
 
@@ -251,3 +248,75 @@ def editar_perfil_view(request):
         'hide_navigation': False,
     }
     return render(request, 'usuarios/editar_perfil.html', context)
+
+
+# -------------------------------------------------------------------
+# HELPER: COMPROBAR SI ES ADMIN (para gestión de usuarios)
+# -------------------------------------------------------------------
+def es_admin_sistema(user):
+    """
+    Solo permite acceso a:
+    - superuser
+    - staff
+    - o usuarios con rol 'ti_informatica'
+    Ajusta el nombre del rol si usas otro para el admin.
+    """
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser or user.is_staff:
+        return True
+    return hasattr(user, 'perfil') and user.perfil.rol == 'ti_informatica'
+
+
+# -------------------------------------------------------------------
+# GESTIÓN DE USUARIOS (ADMIN)
+# -------------------------------------------------------------------
+@login_required
+@user_passes_test(es_admin_sistema)
+def gestion_usuarios(request):
+    """
+    Lista usuarios y permite crear nuevos con USUARIO, CORREO y ROL.
+    """
+    usuarios = User.objects.select_related('perfil').all().order_by('username')
+
+    if request.method == 'POST':
+        form = AdminUserCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Usuario creado correctamente.")
+            return redirect('usuarios:gestion_usuarios')
+    else:
+        form = AdminUserCreateForm()
+
+    context = {
+        'usuarios': usuarios,
+        'form': form,
+        'hide_navigation': False,
+    }
+    return render(request, 'usuarios/gestion_usuarios.html', context)
+
+
+@login_required
+@user_passes_test(es_admin_sistema)
+def eliminar_usuario(request, user_id):
+    """
+    Elimina un usuario seleccionado.
+    (Aquí bloqueamos que el usuario se borre a sí mismo).
+    """
+    usuario = get_object_or_404(User, pk=user_id)
+
+    if request.user.id == usuario.id:
+        messages.error(request, "No puedes eliminar tu propio usuario.")
+        return redirect('usuarios:gestion_usuarios')
+
+    if request.method == 'POST':
+        nombre = usuario.username
+        usuario.delete()
+        messages.success(request, f"Usuario '{nombre}' eliminado correctamente.")
+        return redirect('usuarios:gestion_usuarios')
+
+    context = {
+        'usuario': usuario,
+        'hide_navigation': False,
+    }
+    return render(request, 'usuarios/confirmar_eliminar_usuario.html', context)
