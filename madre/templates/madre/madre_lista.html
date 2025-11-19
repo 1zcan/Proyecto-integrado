@@ -100,7 +100,7 @@
                         </a>
                         {% endif %}
 
-                        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' %}
+                        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol =='ti_informatica' %}
                         {# ANTES: 'madre_tamizajes' #}
                         <a href="{% url 'madre:madre_tamizajes' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-warning" title="Ver Tamizajes">
@@ -108,7 +108,7 @@
                         </a>
                         {% endif %}
 
-                        {% if rol == 'profesional_salud' %}
+                        {% if rol == 'profesional_salud' or rol =='ti_informatica' %}
                         {# ANTES: 'madre_observaciones' #}
                         <a href="{% url 'madre:madre_observaciones' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-secondary" title="Firmar Observaciones">

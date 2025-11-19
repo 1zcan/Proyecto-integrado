@@ -121,7 +121,7 @@ class RobsonUpdateView(UpdateView):
 
 # FIRMA DIGITAL: Exclusivo Profesional de Salud (Médico/Matrona).
 # TI no firma, TENS no firma.
-@method_decorator(role_required(['profesional_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class PartoObservacionesView(LoginRequiredMixin, CreateView):
     model = PartoObservacion
     form_class = PartoObservacionForm

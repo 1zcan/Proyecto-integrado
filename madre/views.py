@@ -62,7 +62,7 @@ class MadreUpdateView(UpdateView):
 
 # DATOS CLÍNICOS (Tamizajes): EXCLUSIVO Salud (Profesional y Técnico).
 # Administrativo NO entra aquí.
-@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class TamizajeCreateUpdateView(UpdateView):
     model = TamizajeMaterno
     form_class = TamizajeMaternoForm
@@ -79,7 +79,7 @@ class TamizajeCreateUpdateView(UpdateView):
 
 # FIRMA (Observaciones): EXCLUSIVO Profesional de Salud (Médico/Matrona).
 # Técnico NO firma.
-@method_decorator(role_required(['profesional_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class MadreObservacionesView(LoginRequiredMixin, CreateView):
     model = MadreObservacion
     form_class = MadreObservacionForm

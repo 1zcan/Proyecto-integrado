@@ -89,7 +89,7 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 
 # VALIDACIÓN DE ALTA: EXCLUSIVO Profesional (Médico/Matrona).
 # El TENS no da el alta.
-@method_decorator(role_required(['profesional_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RNValidarAltaView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_validar_alta.html'
@@ -152,7 +152,7 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
 
 
 # PROFILAXIS (VACUNAS): TENS y Profesionales.
-@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNProfilaxisView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_profilaxis.html'
@@ -179,7 +179,7 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
 
 
 # OBSERVACIONES: TENS y Profesionales.
-@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNObservacionesView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_observaciones.html'
