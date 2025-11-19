@@ -13,6 +13,10 @@ urlpatterns = [
     # Formulario de Tamizajes (REM A11)
     path('<int:madre_pk>/tamizajes/', views.TamizajeCreateUpdateView.as_view(), name='madre_tamizajes'),
     
-    # Observaciones
-    path('<int:madre_pk>/observaciones/', views.MadreObservacionesView.as_view(), name='madre_observaciones'),
+    # Observaciones (firma con contraseña del usuario)
+    path(
+        '<int:madre_pk>/observaciones/',
+        views.MadreObservacionesView.as_view(),
+        name='madre_observaciones'
+    ),
 ]

@@ -73,9 +73,14 @@ class ModeloAtencionUpdateView(UpdateView):
         obj, created = ModeloAtencionParto.objects.get_or_create(parto=parto)
         return obj
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        parto_pk = self.kwargs.get('pk')
+        context['parto'] = Parto.objects.get(pk=parto_pk)
+        return context
+
     def get_success_url(self):
         return reverse_lazy('parto_lista')
-
 
 class RobsonUpdateView(UpdateView):
     model = RobsonParto
@@ -87,6 +92,12 @@ class RobsonUpdateView(UpdateView):
         parto = Parto.objects.get(pk=parto_pk)
         obj, created = RobsonParto.objects.get_or_create(parto=parto)
         return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        parto_pk = self.kwargs.get('pk')
+        context['parto'] = Parto.objects.get(pk=parto_pk)
+        return context
 
     def get_success_url(self):
         return reverse_lazy('parto_lista')

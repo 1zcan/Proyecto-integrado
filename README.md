@@ -21,6 +21,8 @@ Crear el archivo .env con valores para:
 
 -SECRET_KEY=
 
+-SENDGRID_API_KEY =
+
 python manage.py makemigrations
 
 python manage.py migrate

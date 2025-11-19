@@ -2,6 +2,7 @@
 from django import forms
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from catalogo.models import Catalogo
+import re
 
 
 class MadreForm(forms.ModelForm):
@@ -39,6 +40,7 @@ class MadreForm(forms.ModelForm):
             self.fields['fecha_nacimiento'].widget = forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             )
+
     class Meta:
         model = Madre
         fields = [
@@ -47,6 +49,15 @@ class MadreForm(forms.ModelForm):
             'discapacidad', 'documentos',
         ]
 
+    def clean_rut(self):
+        rut = self.cleaned_data.get("rut", "").strip()
+        pattern = r"^[0-9]{1,8}-[0-9Kk]{1}$"
+
+        if not re.match(pattern, rut):
+            raise forms.ValidationError(
+                "El RUT debe tener el formato 12345678-9 o 12345678-K"
+            )
+        return rut
 
 
 class TamizajeMaternoForm(forms.ModelForm):
@@ -71,12 +82,20 @@ class TamizajeMaternoForm(forms.ModelForm):
 
 
 class MadreObservacionForm(forms.ModelForm):
-    # Campo para la firma simple
+    """
+    Formulario para observaciones de la madre que requiere
+    la contraseña del usuario para la firma simple.
+    """
     clave_firma = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=True,
         label="Clave de Firma"
     )
+
+    def __init__(self, *args, **kwargs):
+        # RECIBIMOS EL USUARIO DESDE LA VISTA
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = MadreObservacion
@@ -91,20 +110,16 @@ class MadreObservacionForm(forms.ModelForm):
 
     def clean_clave_firma(self):
         clave = self.cleaned_data.get('clave_firma')
+
         if not clave:
             raise forms.ValidationError("Debe ingresar la clave para validar la observación.")
-        # Aquí puedes agregar validación adicional si quieres verificar la clave contra el usuario
+
+        # Validar que haya un usuario autenticado
+        if self.user is None or not self.user.is_authenticated:
+            raise forms.ValidationError("Debe iniciar sesión para poder firmar la observación.")
+
+        # Comparar con la contraseña real del usuario logueado
+        if not self.user.check_password(clave):
+            raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
+
         return clave
-
-    def clean_rut(self):
-        rut = self.cleaned_data.get("rut", "").strip()
-
-        import re
-        pattern = r"^[0-9]{1,8}-[0-9Kk]{1}$"
-
-        if not re.match(pattern, rut):
-            raise forms.ValidationError(
-                "El RUT debe tener el formato 12345678-9 o 12345678-K"
-            )
-
-        return rut

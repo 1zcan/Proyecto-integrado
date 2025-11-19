@@ -143,7 +143,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_URL = '/usuarios/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/usuarios/login/'
-LOGIN_URL = 'usuarios:login'
+# Email / SendGrid
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "apikey"  # así tal cual, literal
+EMAIL_HOST_PASSWORD = config("SENDGRID_API_KEY")  # 👈 usa decouple, NO os.environ
+
+DEFAULT_FROM_EMAIL = "ggnife71@gmail.com"  # debe ser EXACTAMENTE el sender verificado

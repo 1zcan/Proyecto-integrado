@@ -18,21 +18,47 @@
         <h5 class="mb-0">Agregar Nueva Observación</h5>
     </div>
     <div class="card-body p-4">
+
         <form method="post" novalidate>
             {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <div class="row g-3">
-                
+
                 <div class="col-12">
                     <label for="{{ form.texto.id_for_label }}" class="form-label">
                         {{ form.texto.label }}
                     </label>
-                    {{ form.texto }} </div>
-                
+                    {{ form.texto }}
+                    {% if form.texto.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.texto.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
                 <div class="col-md-6">
                     <label for="{{ form.clave_firma.id_for_label }}" class="form-label">
                         Firma Simple (Clave)
                     </label>
-                    {{ form.clave_firma }} </div>
+                    {{ form.clave_firma }}
+                    {% if form.clave_firma.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.clave_firma.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
 
                 <div class="col-12 text-end">
                     <button type="submit" class="btn btn-primary">
@@ -42,6 +68,7 @@
 
             </div>
         </form>
+
     </div>
 </div>
 
@@ -60,7 +87,7 @@
                     
                     {% if obs.firma_simple %}
                         <span class="badge bg-success-subtle text-success-emphasis ms-auto">
-                            <i class="bi bi-check-circle-fill me-1"></i>Firmado
+                            <i class="bi bi-check-circle-fill me-1"></i> Firmado
                         </span>
                     {% endif %}
                 </div>
@@ -79,67 +106,59 @@
 
 {% endblock %}
 
-
 {% block styles %}
 <style>
-  
+form input[type="text"],
+form input[type="password"],
+form textarea,
+form select {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
 
-  
-    form input[type="text"],
-    form input[type="password"],
-    form textarea,
-    form select {
-        display: block;
-        width: 100%;
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        background-color: #fff;
-        background-clip: padding-box;
-        border: 1px solid #ced4da;
-        appearance: none;
-        border-radius: 0.375rem;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-    }
-    
-    form textarea {
-        min-height: 100px; 
-    }
+form textarea {
+    min-height: 100px;
+}
 
-    form input[type="password"]:focus,
-    form textarea:focus {
-        border-color: #007bff; 
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-    }
-    
-  
-    .logbook-entry {
-        background-color: #f8f9fa; 
-        border: 1px solid #e9ecef; 
-        border-radius: 6px; 
-        overflow: hidden; 
-    }
-    
-    .logbook-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem; 
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #e9ecef;
-        font-size: 0.9rem;
-        background-color: #ffffff;
-    }
-    
-    .logbook-body {
-        padding: 1rem;
-        font-size: 0.95rem;
-    }
-    
-    .logbook-body p:last-child {
-        margin-bottom: 0;
-    }
+form input[type="password"]:focus,
+form textarea:focus {
+    border-color: #007bff;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+.logbook-entry {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.logbook-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.logbook-body {
+    padding: 1rem;
+    font-size: 0.95rem;
+}
+
+.logbook-body p:last-child {
+    margin-bottom: 0;
+}
 </style>
 {% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert alert-danger mt-4">
+  <h5>Enlace de activación inválido</h5>
+  <p>El enlace que usaste es inválido o ya fue utilizado.</p>
+  <a href="{% url 'usuarios:login' %}" class="btn btn-secondary mt-2">Volver al login</a>
+</div>
+{% endblock %}

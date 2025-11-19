@@ -65,7 +65,7 @@ class RNForm(forms.ModelForm):
 class ProfiRNForm(forms.ModelForm):
     # ... (Formulario de Profilaxis sin cambios relevantes)
     tipo = forms.ModelChoiceField(
-        queryset=Catalogo.objects.filter(tipo='PROFILAXIS_RN', activo=True),
+        queryset=Catalogo.objects.filter(tipo='VAL_PROFILAXIS_RN', activo=True),
         required=True,
         label="Tipo de Profilaxis",
         widget=forms.Select(attrs={'class': 'form-control'})

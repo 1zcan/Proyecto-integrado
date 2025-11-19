@@ -1,6 +1,7 @@
 # madre/views.py
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin  # 👈 NUEVO
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm
 
@@ -18,26 +19,19 @@ class MadreListView(ListView):
         # Usamos select_related para evitar N+1 al acceder a comuna/cesfam en la tabla
         qs = Madre.objects.select_related("comuna", "cesfam").filter(activo=True)
 
-        # --- 🟢 INICIO DE LA CORRECCIÓN (Añadir filtro RUT) ---
-        
-        # 1. Obtenemos todos los valores de los filtros
+        # --- filtros ---
         rut = self.request.GET.get("rut")
         comuna = self.request.GET.get("comuna")
         cesfam = self.request.GET.get("cesfam")
 
-        # 2. Aplicamos el filtro RUT (Nuevo)
         if rut:
-            # Usamos 'icontains' para que la búsqueda no sea exacta (ej. 12345)
             qs = qs.filter(rut__icontains=rut)
 
-        # 3. Aplicamos los filtros existentes
         if comuna:
             qs = qs.filter(comuna_id=comuna)
 
         if cesfam:
             qs = qs.filter(cesfam_id=cesfam)
-            
-        # --- 🟢 FIN DE LA CORRECCIÓN ---
 
         return qs
 
@@ -46,14 +40,15 @@ class MadreListView(ListView):
 
         from catalogo.models import Catalogo
 
-        # (Esto se mantiene igual, es para poblar los dropdowns)
-        context["comunas"] = Catalogo.objects.filter(tipo="VAL_COMUNA", activo=True).order_by("valor")
-        context["cesfams"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
+        context["comunas"] = Catalogo.objects.filter(
+            tipo="VAL_COMUNA", activo=True
+        ).order_by("valor")
+        context["cesfams"] = Catalogo.objects.filter(
+            tipo="VAL_ESTABLECIMIENTO", activo=True
+        ).order_by("valor")
 
         context["selected_comuna"] = self.request.GET.get("comuna", "")
         context["selected_cesfam"] = self.request.GET.get("cesfam", "")
-        
-        # (El template ya maneja el valor del RUT con {{ request.GET.rut }})
 
         return context
 
@@ -95,13 +90,23 @@ class TamizajeCreateUpdateView(UpdateView):
         return reverse_lazy('madre_lista')
 
 
-class MadreObservacionesView(CreateView):
+class MadreObservacionesView(LoginRequiredMixin, CreateView):
     """
-    Vista para añadir observaciones firmadas 
+    Vista para añadir observaciones firmadas.
+    Requiere que el usuario ingrese su contraseña (firma simple).
     """
     model = MadreObservacion
     form_class = MadreObservacionForm
     template_name = "madre/madre_observaciones.html"
+
+    def get_form_kwargs(self):
+        """
+        Aquí pasamos el usuario logueado al formulario para que
+        pueda validar la clave de firma contra su contraseña real.
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # 👈 CLAVE PARA LA VALIDACIÓN
+        return kwargs
 
     def form_valid(self, form):
         form.instance.autor = self.request.user
@@ -113,7 +118,7 @@ class MadreObservacionesView(CreateView):
         context = super().get_context_data(**kwargs)
         madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
         context['madre'] = madre
-        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones
+        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones (si lo usas)
         return context
 
     def get_success_url(self):
