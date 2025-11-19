@@ -9,11 +9,12 @@
     
     <div class="row g-4">
 
-        {# TARJETA 1: GESTIÓN DE USUARIOS (Solo TI) #}
+        {# 1. GESTIÓN DE USUARIOS (Solo TI) #}
         {% if rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'usuarios:registro' %}" class="card-link">
-                <div class="card h-100 p-3 border-warning"> <div class="card-body">
+                <div class="card h-100 p-3 border-warning">
+                    <div class="card-body">
                         <div class="card-icon icon-orange">
                             <i class="bi bi-shield-lock"></i>
                         </div>
@@ -27,22 +28,21 @@
         </div>
         {% endif %}
 
-        {# TARJETA 2: MADRE Y PARTO #}
-        {# Acceso: Administrativo (Admisión), Profesional y Técnico #}
+        {# 2. MADRES (Admisión) #}
+        {# Visible para: Administrativo, Profesional, Técnico y TI #}
         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'madre_lista' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <div class="card-icon icon-pink">
-                            <i class="bi bi-person-plus"></i>
-                        </div>
-                        <h5 class="card-title">Registrar Madre y Parto</h5>
+                            <i class="bi bi-people"></i> </div>
+                        <h5 class="card-title">Gestión de Madres</h5>
                         <p class="card-text text-muted">
                             {% if rol == 'administrativo' %}
                                 Ingreso de admisión y datos demográficos.
                             {% else %}
-                                Ingreso de datos maternos y del proceso de parto.
+                                Fichas maternas, antecedentes y admisión.
                             {% endif %}
                         </p>
                     </div>
@@ -51,8 +51,28 @@
         </div>
         {% endif %}
 
-        {# TARJETA 3: RECIÉN NACIDO #}
-        {# Acceso: Profesional y Técnico. (Administrativo BLOQUEADO explícitamente) #}
+        {# 3. PARTOS (Clínico) - NUEVA TARJETA #}
+        {# Visible para: Profesional, Técnico y TI. (Administrativo NO) #}
+        {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'parto_lista' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body">
+                        <div class="card-icon icon-green">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                        <h5 class="card-title">Gestión de Partos</h5>
+                        <p class="card-text text-muted">
+                            Historial de partos, Robson, Modelo de Atención y Firmas.
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {# 4. RECIÉN NACIDO (Clínico) #}
+        {# Visible para: Profesional, Técnico y TI. (Administrativo NO) #}
         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'recien_nacido:rn_lista' %}" class="card-link">
@@ -61,9 +81,9 @@
                         <div class="card-icon icon-blue">
                             <i class="bi bi-clipboard-plus"></i>
                         </div>
-                        <h5 class="card-title">Registrar Recién Nacido</h5>
+                        <h5 class="card-title">Recién Nacido</h5>
                         <p class="card-text text-muted">
-                            Datos antropométricos y procedimientos del RN.
+                            Atención inmediata, vacunas y validación de alta.
                         </p>
                     </div>
                 </div>
@@ -71,8 +91,8 @@
         </div>
         {% endif %}
 
-        {# TARJETA 4: REPORTES #}
-        {# Acceso: Profesional (Valida) y TI (Soporte/Datos) #}
+        {# 5. REPORTES (Gestión) #}
+        {# Visible para: Profesional y TI #}
         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'reportes:reportes_menu' %}" class="card-link">
@@ -96,13 +116,8 @@
 </div>
 
 <style>
-    body {
-        background-color: #f8f9fa;
-    }
-    .navbar {
-        background-color: #ffffff;
-        border-bottom: 1px solid #dee2e6;
-    }
+    body { background-color: #f8f9fa; }
+    
     .card-icon {
         font-size: 2.5rem;
         padding: 1rem;
@@ -110,12 +125,14 @@
         display: inline-block;
         margin-bottom: 1rem;
     }
+    
+    /* Colores de iconos */
     .icon-pink { color: #d63384; background-color: #fce6f0; }
     .icon-blue { color: #0d6efd; background-color: #e7f0ff; }
     .icon-purple { color: #6f42c1; background-color: #f1eefe; }
-    
-    /* Estilo nuevo para TI */
+    .icon-green { color: #198754; background-color: #e8f3ee; } /* Color para Partos */
     .icon-orange { color: #fd7e14; background-color: #fff3cd; }
+
     .border-warning { border: 1px solid #ffc107 !important; }
 
     .card {
@@ -127,15 +144,8 @@
         transform: translateY(-5px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    .card-link {
-        text-decoration: none;
-        color: inherit;
-    }
-    .card-link:hover .card-title {
-        color: #0d6efd;
-    }
-    .card-title {
-        font-weight: 600;
-    }
+    .card-link { text-decoration: none; color: inherit; }
+    .card-link:hover .card-title { color: #0d6efd; }
+    .card-title { font-weight: 600; }
 </style>
 {% endblock %}
