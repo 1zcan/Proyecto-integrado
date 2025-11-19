@@ -272,12 +272,6 @@
     <footer class="text-center text-muted">
       <small>
         Sistema desarrollado por estudiantes INACAP — Proyecto Integrado 2025
-        <br />
-        {% if user.is_authenticated and user.perfil.rol == 'ti_informatica' %}
-        <a href="{% url 'auditoria:log_list' %}" class="log"
-          >Registro de Auditoría</a
-        >
-        {% endif %}
       </small>
     </footer>
     {% endif %} {% endblock %}

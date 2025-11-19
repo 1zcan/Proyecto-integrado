@@ -28,15 +28,33 @@
         </div>
         {% endif %}
 
-        {# 2. MADRES (Admisión) #}
-        {# Visible para: Administrativo, Profesional, Técnico y TI #}
+        {# 2. AUDITORÍA (Solo TI) - NUEVA TARJETA #}
+        {% if rol == 'ti_informatica' %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'auditoria:log_list' %}" class="card-link">
+                <div class="card h-100 p-3 border-danger"> <div class="card-body">
+                        <div class="card-icon icon-red">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <h5 class="card-title">Registro de Auditoría</h5>
+                        <p class="card-text text-muted">
+                            Visualizar logs de acciones críticas y eliminaciones.
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        {# 3. GESTIÓN DE MADRES (Admisión, Clínicos y TI) #}
         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'madre_lista' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body">
                         <div class="card-icon icon-pink">
-                            <i class="bi bi-people"></i> </div>
+                            <i class="bi bi-people"></i>
+                        </div>
                         <h5 class="card-title">Gestión de Madres</h5>
                         <p class="card-text text-muted">
                             {% if rol == 'administrativo' %}
@@ -51,8 +69,7 @@
         </div>
         {% endif %}
 
-        {# 3. PARTOS (Clínico) - NUEVA TARJETA #}
-        {# Visible para: Profesional, Técnico y TI. (Administrativo NO) #}
+        {# 4. GESTIÓN DE PARTOS (Clínicos y TI) #}
         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'parto_lista' %}" class="card-link">
@@ -71,8 +88,7 @@
         </div>
         {% endif %}
 
-        {# 4. RECIÉN NACIDO (Clínico) #}
-        {# Visible para: Profesional, Técnico y TI. (Administrativo NO) #}
+        {# 5. RECIÉN NACIDO (Clínicos y TI) #}
         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'recien_nacido:rn_lista' %}" class="card-link">
@@ -91,8 +107,7 @@
         </div>
         {% endif %}
 
-        {# 5. REPORTES (Gestión) #}
-        {# Visible para: Profesional y TI #}
+        {# 6. REPORTES (Profesional y TI) #}
         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
         <div class="col-md-6 col-lg-4">
             <a href="{% url 'reportes:reportes_menu' %}" class="card-link">
@@ -130,10 +145,13 @@
     .icon-pink { color: #d63384; background-color: #fce6f0; }
     .icon-blue { color: #0d6efd; background-color: #e7f0ff; }
     .icon-purple { color: #6f42c1; background-color: #f1eefe; }
-    .icon-green { color: #198754; background-color: #e8f3ee; } /* Color para Partos */
+    .icon-green { color: #198754; background-color: #e8f3ee; }
     .icon-orange { color: #fd7e14; background-color: #fff3cd; }
+    /* Nuevo color para Auditoría */
+    .icon-red { color: #dc3545; background-color: #f8d7da; }
 
     .border-warning { border: 1px solid #ffc107 !important; }
+    .border-danger { border: 1px solid #dc3545 !important; }
 
     .card {
         border: none;
