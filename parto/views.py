@@ -1,11 +1,15 @@
-# parto/views.py
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy, reverse
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator  # 👈 Necesario para los decoradores
+from usuarios.decorators import role_required  # 👈 Tu decorador personalizado
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
 from catalogo.models import Catalogo
 
 
+# Solo Profesionales de Salud y TI (Soporte). Administrativos BLOQUEADOS.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class PartoListView(ListView):
     model = Parto
     template_name = "parto/parto_lista.html"
@@ -55,6 +59,7 @@ class PartoListView(ListView):
         return context
 
 
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class PartoCreateUpdateView(UpdateView):
     model = Parto
     form_class = PartoForm
@@ -62,6 +67,8 @@ class PartoCreateUpdateView(UpdateView):
     success_url = reverse_lazy('parto_lista')
 
 
+# Exclusivo Clínico: Modelo de atención
+@method_decorator(role_required(['profesional_salud']), name='dispatch')
 class ModeloAtencionUpdateView(UpdateView):
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
@@ -82,6 +89,9 @@ class ModeloAtencionUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('parto_lista')
 
+
+# Exclusivo Clínico: Clasificación Robson
+@method_decorator(role_required(['profesional_salud']), name='dispatch')
 class RobsonUpdateView(UpdateView):
     model = RobsonParto
     form_class = RobsonForm
@@ -103,30 +113,36 @@ class RobsonUpdateView(UpdateView):
         return reverse_lazy('parto_lista')
 
 
-class PartoObservacionesView(CreateView):
+# Firma Digital: Exclusivo Profesional de Salud (Requiere Login para validar clave)
+@method_decorator(role_required(['profesional_salud']), name='dispatch')
+class PartoObservacionesView(LoginRequiredMixin, CreateView):
     model = PartoObservacion
     form_class = PartoObservacionForm
     template_name = "parto/parto_observaciones.html"
 
+    def get_form_kwargs(self):
+        """Inyectamos el usuario al form para validar la contraseña de firma"""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user 
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Trae el objeto Parto para la plantilla
         parto_pk = self.kwargs.get('parto_pk')
         context['parto'] = Parto.objects.get(pk=parto_pk)
         return context
 
     def form_valid(self, form):
-        # Asigna automáticamente autor, parto y firma
         form.instance.autor = self.request.user
         form.instance.parto = Parto.objects.get(pk=self.kwargs['parto_pk'])
         form.instance.firma_simple = True
         return super().form_valid(form)
 
     def get_success_url(self):
-        # Redirige a la misma página de observaciones del parto
         return reverse('parto_observaciones', kwargs={'parto_pk': self.kwargs['parto_pk']})
 
 
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class PartoCreateView(CreateView):
     model = Parto
     form_class = PartoForm

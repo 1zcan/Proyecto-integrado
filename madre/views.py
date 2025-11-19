@@ -4,6 +4,8 @@ from django.views.generic import ListView, CreateView, UpdateView, View
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.utils.decorators import method_decorator  # 👈 Necesario
+from usuarios.decorators import role_required  # 👈 Decorador personalizado
 
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm, MadreDeleteForm
@@ -13,6 +15,8 @@ from auditoria.models import LogAccion
 from auditoria.signals import get_client_ip
 
 
+# Todos los roles pueden buscar pacientes
+@method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class MadreListView(ListView):
     """
     Vista para listar madres (pacientes)
@@ -23,7 +27,6 @@ class MadreListView(ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        # Usamos select_related para evitar N+1 al acceder a comuna/cesfam en la tabla
         qs = Madre.objects.select_related("comuna", "cesfam").filter(activo=True)
 
         # --- filtros ---
@@ -33,10 +36,8 @@ class MadreListView(ListView):
 
         if rut:
             qs = qs.filter(rut__icontains=rut)
-
         if comuna:
             qs = qs.filter(comuna_id=comuna)
-
         if cesfam:
             qs = qs.filter(cesfam_id=cesfam)
 
@@ -44,7 +45,6 @@ class MadreListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         from catalogo.models import Catalogo
 
         context["comunas"] = Catalogo.objects.filter(
@@ -56,13 +56,14 @@ class MadreListView(ListView):
 
         context["selected_comuna"] = self.request.GET.get("comuna", "")
         context["selected_cesfam"] = self.request.GET.get("cesfam", "")
-
         return context
 
 
+# Administrativos (Admisión) crean la ficha. Clínicos y TI también pueden si es necesario.
+@method_decorator(role_required(['administrativo', 'profesional_salud', 'ti_informatica']), name='dispatch')
 class MadreCreateView(CreateView):
     """
-    Vista para registrar una nueva madre 
+    Vista para registrar una nueva madre (Datos Demográficos)
     """
     model = Madre
     form_class = MadreForm
@@ -70,6 +71,8 @@ class MadreCreateView(CreateView):
     success_url = reverse_lazy('madre_lista')
 
 
+# Igual que crear: Edición de datos demográficos.
+@method_decorator(role_required(['administrativo', 'profesional_salud', 'ti_informatica']), name='dispatch')
 class MadreUpdateView(UpdateView):
     """
     Vista para editar la ficha de la madre 
@@ -80,6 +83,8 @@ class MadreUpdateView(UpdateView):
     success_url = reverse_lazy('madre_lista')
 
 
+# DATOS CLÍNICOS: Administrativos BLOQUEADOS. Solo Personal de Salud.
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
 class TamizajeCreateUpdateView(UpdateView):
     """
     Vista para gestionar el tamizaje REM A11 
@@ -97,22 +102,19 @@ class TamizajeCreateUpdateView(UpdateView):
         return reverse_lazy('madre_lista')
 
 
+# FIRMA: Exclusivo Profesional de Salud (Técnicos solo leen, no firman aquí)
+@method_decorator(role_required(['profesional_salud']), name='dispatch')
 class MadreObservacionesView(LoginRequiredMixin, CreateView):
     """
     Vista para añadir observaciones firmadas.
-    Requiere que el usuario ingrese su contraseña (firma simple).
     """
     model = MadreObservacion
     form_class = MadreObservacionForm
     template_name = "madre/madre_observaciones.html"
 
     def get_form_kwargs(self):
-        """
-        Aquí pasamos el usuario logueado al formulario para que
-        pueda validar la clave de firma contra su contraseña real.
-        """
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # CLAVE PARA LA VALIDACIÓN
+        kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
@@ -125,36 +127,27 @@ class MadreObservacionesView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
         context['madre'] = madre
-        context['observaciones'] = madre.observaciones.all()  # Historial de observaciones
+        context['observaciones'] = madre.observaciones.all()
         return context
 
     def get_success_url(self):
-        # Redirige a la misma página de observaciones para mostrar la nueva
         return reverse_lazy(
             'madre_observaciones',
             kwargs={'madre_pk': self.kwargs['madre_pk']}
         )
 
 
+# ELIMINAR: Acción crítica. Solo TI (Soporte) y Profesionales Responsables.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class MadreDeleteView(LoginRequiredMixin, View):
     """
-    Vista para eliminar una Madre.
-
-    Lógica:
-    - Pide motivo + clave de firma (contraseña del usuario).
-    - Muestra advertencia si tiene RN asociados.
-    - Al confirmar:
-        * Se eliminan los Partos de esa madre.
-        * Por cascada, se eliminan los RN de esos partos.
-        * Luego se elimina la propia Madre.
-    - Todo queda registrado en LogAccion (auditoría).
+    Vista para eliminar una Madre y toda su descendencia asociada (Partos/RN).
     """
     template_name = "madre/madre_confirm_delete.html"
 
     def get(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         hijos = RecienNacido.objects.filter(parto__madre=madre)
-
         form = MadreDeleteForm(user=request.user)
 
         context = {
@@ -181,7 +174,6 @@ class MadreDeleteView(LoginRequiredMixin, View):
 
         razon = form.cleaned_data["razon"]
 
-        # Construir detalle para la auditoría
         detalle = (
             f"Eliminación de Madre ID={madre.id}, RUT={madre.rut}, "
             f"Nombre={madre.nombre_completo}. Motivo: {razon}. "
@@ -206,10 +198,7 @@ class MadreDeleteView(LoginRequiredMixin, View):
             ip_address=get_client_ip(),
         )
 
-        # 1) Eliminar partos (esto cascadeará a RecienNacido por on_delete=CASCADE)
-        madre.partos.all().delete()
-
-        # 2) Eliminar la madre
+        madre.partos.all().delete() # Cascada manual/explicita
         madre.delete()
 
         messages.success(

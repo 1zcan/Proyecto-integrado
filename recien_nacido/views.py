@@ -6,6 +6,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.utils import timezone
 from django.contrib import messages
+from django.utils.decorators import method_decorator  
+from usuarios.decorators import role_required 
 
 from .models import RecienNacido, ProfiRN, RNObservacion
 from .forms import RNForm, ProfiRNForm, RNObservacionForm, RNDeleteForm
@@ -18,6 +20,7 @@ from auditoria.signals import get_client_ip
 # ================================================
 #  1. LISTA DE TODOS LOS RECIÉN NACIDOS
 # ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNListView(LoginRequiredMixin, ListView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_lista.html'
@@ -25,12 +28,10 @@ class RNListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        # Muestra todos los RNs
         return super().get_queryset().select_related('parto', 'parto__madre')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Contar pendientes de alta para mostrar en el botón de navegación
         context['recien_nacidos_pendientes_count'] = RecienNacido.objects.filter(fecha_alta__isnull=True).count()
         return context
 
@@ -38,13 +39,13 @@ class RNListView(LoginRequiredMixin, ListView):
 # ================================================
 #  2. LISTA DE RN PENDIENTES DE ALTA
 # ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNAltaPendienteListView(LoginRequiredMixin, ListView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_lista_pendientes_alta.html'
     context_object_name = 'recien_nacidos_pendientes'
 
     def get_queryset(self):
-        # Filtra solo los Recién Nacidos que no tienen fecha de alta (están pendientes)
         return RecienNacido.objects.filter(fecha_alta__isnull=True).select_related('parto', 'parto__madre')
 
     def get_context_data(self, **kwargs):
@@ -56,6 +57,7 @@ class RNAltaPendienteListView(LoginRequiredMixin, ListView):
 # ================================================
 #  3. CREAR RECIÉN NACIDO
 # ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNCreateView(LoginRequiredMixin, CreateView):
     model = RecienNacido
     form_class = RNForm
@@ -65,7 +67,6 @@ class RNCreateView(LoginRequiredMixin, CreateView):
         return reverse('recien_nacido:rn_lista')
 
     def form_valid(self, form):
-        # Si tienes campo creado_por en el modelo, puedes setearlo aquí
         if hasattr(form.instance, "creado_por"):
             form.instance.creado_por = self.request.user
         return super().form_valid(form)
@@ -79,6 +80,7 @@ class RNCreateView(LoginRequiredMixin, CreateView):
 # ================================================
 #  4. EDITAR RECIÉN NACIDO
 # ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNUpdateView(LoginRequiredMixin, UpdateView):
     model = RecienNacido
     form_class = RNForm
@@ -94,8 +96,10 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 
 
 # ================================================
-#  5. VALIDACIÓN DE ALTA
+#  5. VALIDACIÓN DE ALTA (CRÍTICO)
 # ================================================
+# Exclusivo Profesional de Salud (Médico/Matrona). Técnico y TI BLOQUEADOS.
+@method_decorator(role_required(['profesional_salud']), name='dispatch')
 class RNValidarAltaView(LoginRequiredMixin, DetailView):
     """
     Vista para mostrar la pantalla de validación de alta del Recién Nacido
@@ -105,7 +109,6 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
     template_name = 'recien_nacido/rn_validar_alta.html'
     context_object_name = 'rn'
 
-    # --------- MÉTODO AUXILIAR: evalúa datos críticos ----------
     def evaluar_datos_criticos(self, rn):
         datos_criticos_completos = True
         mensajes_error = []
@@ -131,7 +134,6 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
 
         return datos_criticos_completos, mensajes_error, profilaxis_completa
 
-    # --------- GET: solo mostrar la pantalla ----------
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         rn = self.object
@@ -146,54 +148,42 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
 
         return context
 
-    # --------- POST: manejar los botones del formulario ----------
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         rn = self.object
 
-        # Re-evaluar datos críticos
         datos_criticos_completos, mensajes_error, profilaxis_completa = \
             self.evaluar_datos_criticos(rn)
 
         action = request.POST.get("action")
 
-        # 1) VALIDAR ALTA
         if action == "validar_alta":
             if not datos_criticos_completos:
-                messages.error(
-                    request,
-                    "No se puede validar el alta porque faltan datos críticos."
-                )
-                # Volver a mostrar la misma página con los errores
+                messages.error(request, "No se puede validar el alta porque faltan datos críticos.")
                 context = self.get_context_data()
-                # por si acaso, sobre-escribimos por consistencia
                 context['datos_criticos_completos'] = datos_criticos_completos
                 context['mensajes_error'] = mensajes_error
                 context['profilaxis_completa'] = profilaxis_completa
                 return render(request, self.template_name, context)
 
-            # Si está todo OK, marcar alta
             rn.fecha_alta = timezone.now()
             rn.save()
             messages.success(request, "Alta validada correctamente.")
             return redirect('recien_nacido:rn_pendientes_alta')
 
-        # 2) ENVIAR A CORRECCIÓN
         elif action == "enviar_correccion":
-            messages.warning(
-                request,
-                "El registro se ha marcado para corrección. Revise y edite los datos del RN."
-            )
+            messages.warning(request, "El registro se ha marcado para corrección. Revise y edite los datos del RN.")
             return redirect('recien_nacido:rn_editar', pk=rn.pk)
 
-        # Acción desconocida: simplemente recargar
         messages.error(request, "Acción no reconocida.")
         return redirect(request.path_info)
 
 
 # ================================================
-#  6. PROFILAXIS
+#  6. PROFILAXIS (VACUNAS)
 # ================================================
+# TENS habilitados para registrar vacunas
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
 class RNProfilaxisView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_profilaxis.html'
@@ -202,10 +192,7 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['profilaxis_form'] = ProfiRNForm()
-
-        # Usamos el related_name correcto: 'profilaxis_set'
         context['profilaxis_list'] = self.object.profilaxis_set.all().select_related('tipo', 'registrado_por')
-
         return context
 
     def post(self, request, *args, **kwargs):
@@ -227,6 +214,8 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
 # ================================================
 #  7. OBSERVACIONES
 # ================================================
+# TENS y Profesionales pueden dejar notas/observaciones
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud']), name='dispatch')
 class RNObservacionesView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_observaciones.html'
@@ -257,14 +246,11 @@ class RNObservacionesView(LoginRequiredMixin, DetailView):
 # ================================================
 #  8. ELIMINAR RECIÉN NACIDO
 # ================================================
+# Restringido: Solo TI (Soporte) y Profesional Salud. TENS NO puede eliminar.
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RNDeleteView(LoginRequiredMixin, View):
     """
     Vista para eliminar un Recién Nacido.
-
-    - Solo se elimina el RN (y por cascada sus profilaxis y observaciones).
-    - La madre y otros RN de la misma madre NO se tocan.
-    - Requiere motivo + clave de firma.
-    - Registra todo en LogAccion.
     """
     template_name = "recien_nacido/rn_confirm_delete.html"
 

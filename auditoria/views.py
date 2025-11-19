@@ -1,9 +1,14 @@
+# auditoria/views.py
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
+from django.utils.decorators import method_decorator  # 👈 Necesario
+from usuarios.decorators import role_required  # 👈 Decorador personalizado
 
 from .models import LogAccion
 
 
+# ACCESO EXCLUSIVO: Solo TI / Informática puede ver la bitácora
+@method_decorator(role_required(['ti_informatica']), name='dispatch')
 class LogListView(LoginRequiredMixin, ListView):
     """
     Vista para revisar la bitácora de acciones con filtros:

@@ -1,10 +1,12 @@
 # reportes/views.py
 from django.shortcuts import render
 from django.views.generic.base import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.functions import ExtractYear
+from django.utils.decorators import method_decorator  # 👈 Necesario
+from usuarios.decorators import role_required  # 👈 Decorador personalizado
 import datetime
-import json  # 👈 IMPORTANTE
+import json 
 
 from .forms import FiltroReporteREMForm, FiltroReporteServicioSaludForm
 from . import services
@@ -12,10 +14,14 @@ from . import export
 from parto.models import Parto
 
 
+# Menú principal de reportes: Solo Profesionales (validación) y TI (soporte)
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class ReportesMenuView(LoginRequiredMixin, TemplateView):
     template_name = 'reportes/reportes_menu.html'
 
 
+# Reportes REM (A11, A21, etc): Estadísticas clínicas oficiales
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class ReporteREMView(LoginRequiredMixin, TemplateView):
     template_name = 'reportes/reportes_rem.html'
     
@@ -67,6 +73,8 @@ class ReporteREMView(LoginRequiredMixin, TemplateView):
         return super().get(request, *args, **kwargs)
 
 
+# Reporte Servicio de Salud Ñuble (Resumen trimestral)
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class ReporteServicioSaludView(LoginRequiredMixin, TemplateView):
     """
     Vista para el Resumen del Servicio de Salud Ñuble.
@@ -104,6 +112,8 @@ class ReporteServicioSaludView(LoginRequiredMixin, TemplateView):
         return context
 
 
+# Reporte de Calidad: Indicadores de gestión clínica
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class ReporteCalidadView(LoginRequiredMixin, TemplateView):
     template_name = 'reportes/reportes_calidad.html'
     
