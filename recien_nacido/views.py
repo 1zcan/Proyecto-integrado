@@ -95,22 +95,19 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 # ================================================
 class RNValidarAltaView(LoginRequiredMixin, DetailView):
     """
-    Vista para mostrar la pantalla de validación de alta del Recién Nacido.
-    Evalúa si todos los datos críticos están completos.
+    Vista para mostrar la pantalla de validación de alta del Recién Nacido
+    y procesar las acciones de 'Validar Alta' y 'Enviar a Corrección'.
     """
     model = RecienNacido
     template_name = 'recien_nacido/rn_validar_alta.html'
     context_object_name = 'rn'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        rn = self.object 
-
-        # --- Lógica de Validación de Datos Críticos (Ejemplo) ---
+    # --------- MÉTODO AUXILIAR: evalúa datos críticos ----------
+    def evaluar_datos_criticos(self, rn):
         datos_criticos_completos = True
         mensajes_error = []
 
-        # 1. Peso y Talla deben existir
+        # 1. Peso y talla
         if rn.peso is None or rn.peso <= 0:
             datos_criticos_completos = False
             mensajes_error.append("El peso del Recién Nacido es un dato crítico y falta.")
@@ -118,27 +115,78 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
             datos_criticos_completos = False
             mensajes_error.append("La talla del Recién Nacido es un dato crítico y falta.")
 
-        # 2. APGAR 5' debe existir y ser válido
+        # 2. APGAR 5'
         if rn.apgar_5 is None:
             datos_criticos_completos = False
             mensajes_error.append("El APGAR a los 5 minutos es un dato crítico y falta.")
-        
-        # 3. Profilaxis: 🟢 CORRECCIÓN APLICADA AQUÍ (Línea 115)
-        profilaxis_completa = rn.profilaxis_set.exists() 
+
+        # 3. Profilaxis
+        profilaxis_completa = rn.profilaxis_set.exists()
         if not profilaxis_completa:
             datos_criticos_completos = False
             mensajes_error.append("No se ha registrado ninguna profilaxis para el Recién Nacido.")
 
-        # 4. Otros datos que consideres críticos
-        # ...
+        return datos_criticos_completos, mensajes_error, profilaxis_completa
+
+    # --------- GET: solo mostrar la pantalla ----------
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rn = self.object
+
+        datos_criticos_completos, mensajes_error, profilaxis_completa = \
+            self.evaluar_datos_criticos(rn)
 
         context['datos_criticos_completos'] = datos_criticos_completos
         context['mensajes_error'] = mensajes_error
         context['profilaxis_completa'] = profilaxis_completa
-        
-        context['id_unico_rn'] = f"M{rn.parto.madre.pk:03d}-RN{rn.pk:03d}" 
+        context['id_unico_rn'] = f"M{rn.parto.madre.pk:03d}-RN{rn.pk:03d}"
 
         return context
+
+    # --------- POST: manejar los botones del formulario ----------
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        rn = self.object
+
+        # Re-evaluar datos críticos
+        datos_criticos_completos, mensajes_error, profilaxis_completa = \
+            self.evaluar_datos_criticos(rn)
+
+        action = request.POST.get("action")
+
+        # 1) VALIDAR ALTA
+        if action == "validar_alta":
+            if not datos_criticos_completos:
+                messages.error(
+                    request,
+                    "No se puede validar el alta porque faltan datos críticos."
+                )
+                # Volver a mostrar la misma página con los errores
+                context = self.get_context_data()
+                # por si acaso, sobre-escribimos por consistencia
+                context['datos_criticos_completos'] = datos_criticos_completos
+                context['mensajes_error'] = mensajes_error
+                context['profilaxis_completa'] = profilaxis_completa
+                return render(request, self.template_name, context)
+
+            # Si está todo OK, marcar alta
+            rn.fecha_alta = timezone.now()
+            rn.save()
+            messages.success(request, "Alta validada correctamente.")
+            return redirect('recien_nacido:rn_pendientes_alta')
+
+        # 2) ENVIAR A CORRECCIÓN
+        elif action == "enviar_correccion":
+            messages.warning(
+                request,
+                "El registro se ha marcado para corrección. Revise y edite los datos del RN."
+            )
+            return redirect('recien_nacido:rn_editar', pk=rn.pk)
+
+        # Acción desconocida: simplemente recargar
+        messages.error(request, "Acción no reconocida.")
+        return redirect(request.path_info)
+
 
 
 # ================================================
