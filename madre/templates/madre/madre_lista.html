@@ -14,11 +14,13 @@
 
     <div class="d-flex gap-2">
         {% if rol == 'tecnico_salud' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
-        <a href="{% url 'parto_lista' %}" class="btn btn-outline-primary">
+        {# ANTES: 'parto_lista' #}
+        <a href="{% url 'parto:parto_lista' %}" class="btn btn-outline-primary">
             <i class="bi bi-baby"></i> Listado de Partos
         </a>
         {% endif %}
         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
+        {# ANTES: 'madre_crear' #}
         <a href="{% url 'madre:madre_crear' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Registrar Nueva Madre
         </a>
@@ -91,35 +93,40 @@
                     <td class="text-nowrap">
                         
                         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
-                        <a href="{% url 'madre_editar' pk=madre.pk %}" 
+                        {# ANTES: 'madre_editar' #}
+                        <a href="{% url 'madre:madre_editar' pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-primary" title="Editar Datos Demográficos">
                             <i class="bi bi-pencil"></i>
                         </a>
                         {% endif %}
 
                         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' %}
-                        <a href="{% url 'madre_tamizajes' madre_pk=madre.pk %}" 
+                        {# ANTES: 'madre_tamizajes' #}
+                        <a href="{% url 'madre:madre_tamizajes' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-warning" title="Ver Tamizajes">
                             <i class="bi bi-clipboard-pulse"></i>
                         </a>
                         {% endif %}
 
                         {% if rol == 'profesional_salud' %}
-                        <a href="{% url 'madre_observaciones' madre_pk=madre.pk %}" 
+                        {# ANTES: 'madre_observaciones' #}
+                        <a href="{% url 'madre:madre_observaciones' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-secondary" title="Firmar Observaciones">
                             <i class="bi bi-chat-text"></i>
                         </a>
                         {% endif %}
                         
                         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
-                        <a href="{% url 'parto_crear_para_madre' madre.id %}" 
+                        {# ANTES: 'parto_crear_para_madre' #}
+                        <a href="{% url 'parto:parto_crear_para_madre' madre.id %}" 
                            class="btn btn-primary btn-sm ms-2" title="Agregar Parto">
                             <i class="bi bi-plus-lg"></i> Parto
                         </a>
                         {% endif %}
 
                         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
-                        <a href="{% url 'madre_eliminar' pk=madre.pk %}" 
+                        {# ANTES: 'madre_eliminar' #}
+                        <a href="{% url 'madre:madre_eliminar' pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-danger ms-1" title="Eliminar Registro">
                             <i class="bi bi-trash"></i>
                         </a>
@@ -140,7 +147,9 @@
     </div>
 </div>
 
-{% endwith %} <script>
+{% endwith %}
+
+<script>
 document.addEventListener("DOMContentLoaded", function () {
     const filtroRut = document.getElementById("filtro_rut");
     if (filtroRut) {
