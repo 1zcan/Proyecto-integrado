@@ -27,12 +27,12 @@
                             
                             {% if user.perfil.foto %}
                                 <img src="{{ user.perfil.foto.url }}" 
-                                     alt="Foto de perfil" 
+                                     
                                      class="rounded-circle shadow-sm border border-4 border-white profile-img" 
                                      id="foto-preview">
                             {% else %}
                                 <img src="{% static 'imagenes/default-user.png' %}" 
-                                     alt="Foto por defecto" 
+                                    
                                      class="rounded-circle shadow-sm border border-4 border-white profile-img" 
                                      id="foto-preview">
                             {% endif %}
