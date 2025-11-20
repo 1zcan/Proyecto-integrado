@@ -2,6 +2,8 @@
 from django.urls import path
 from . import views
 
+app_name = "madre"   #  <<<<<< ***ESTO ES OBLIGATORIO*** !!!
+
 urlpatterns = [
     # Listado de madres
     path('', views.MadreListView.as_view(), name='madre_lista'),

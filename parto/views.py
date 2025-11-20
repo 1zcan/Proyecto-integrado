@@ -7,6 +7,7 @@ from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 from .forms import PartoForm, ModeloAtencionForm, RobsonForm, PartoObservacionForm
 from catalogo.models import Catalogo
 
+
 # LISTADO: Profesional, TI y TENS (Solo lectura para TENS)
 # Administrativos siguen BLOQUEADOS.
 @method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
@@ -26,18 +27,26 @@ class PartoListView(ListView):
         tipo = request.get("filtro_tipo")
         establecimiento = request.get("filtro_establecimiento")
 
-        if fecha_inicio: qs = qs.filter(fecha__gte=fecha_inicio)
-        if fecha_fin: qs = qs.filter(fecha__lte=fecha_fin)
-        if tipo: qs = qs.filter(tipo_parto_id=tipo)
-        if establecimiento: qs = qs.filter(establecimiento_id=establecimiento)
+        if fecha_inicio:
+            qs = qs.filter(fecha__gte=fecha_inicio)
+        if fecha_fin:
+            qs = qs.filter(fecha__lte=fecha_fin)
+        if tipo:
+            qs = qs.filter(tipo_parto_id=tipo)
+        if establecimiento:
+            qs = qs.filter(establecimiento_id=establecimiento)
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tipos_parto"] = Catalogo.objects.filter(tipo="VAL_TIPO_PARTO", activo=True).order_by("valor")
-        context["establecimientos"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
-        
+        context["tipos_parto"] = Catalogo.objects.filter(
+            tipo="VAL_TIPO_PARTO", activo=True
+        ).order_by("valor")
+        context["establecimientos"] = Catalogo.objects.filter(
+            tipo="VAL_ESTABLECIMIENTO", activo=True
+        ).order_by("valor")
+
         context["selected_tipo"] = self.request.GET.get("filtro_tipo", "")
         context["selected_establecimiento"] = self.request.GET.get("filtro_establecimiento", "")
         context["selected_fecha_inicio"] = self.request.GET.get("filtro_fecha_inicio", "")
@@ -52,7 +61,8 @@ class PartoCreateUpdateView(UpdateView):
     model = Parto
     form_class = PartoForm
     template_name = "parto/parto_form.html"
-    success_url = reverse_lazy('parto_lista')
+    # 👉 IMPORTANTE: usar namespace "parto"
+    success_url = reverse_lazy('parto:parto_lista')
 
 
 # CREAR (Desde ficha madre): Exclusivo Profesional y TI.
@@ -63,6 +73,7 @@ class PartoCreateView(CreateView):
     template_name = 'parto/parto_form.html'
 
     def get_initial(self):
+        # Madre viene desde la URL
         return {'madre': self.kwargs['madre_id']}
 
     def form_valid(self, form):
@@ -70,7 +81,8 @@ class PartoCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('parto_lista')
+        # 👉 ANTES: reverse('parto_lista')
+        return reverse('parto:parto_lista')
 
 
 # DATOS CLÍNICOS (Modelo Atención): Profesional y TI.
@@ -93,7 +105,8 @@ class ModeloAtencionUpdateView(UpdateView):
         return context
 
     def get_success_url(self):
-        return reverse_lazy('parto_lista')
+        # 👉 ANTES: reverse_lazy('parto_lista')
+        return reverse_lazy('parto:parto_lista')
 
 
 # DATOS CLÍNICOS (Robson): Profesional y TI.
@@ -116,7 +129,8 @@ class RobsonUpdateView(UpdateView):
         return context
 
     def get_success_url(self):
-        return reverse_lazy('parto_lista')
+        # 👉 ANTES: reverse_lazy('parto_lista')
+        return reverse_lazy('parto:parto_lista')
 
 
 # FIRMA DIGITAL: Exclusivo Profesional de Salud (Médico/Matrona).
@@ -130,7 +144,7 @@ class PartoObservacionesView(LoginRequiredMixin, CreateView):
     def get_form_kwargs(self):
         """Inyectamos el usuario al form para validar la contraseña de firma"""
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user 
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -146,4 +160,8 @@ class PartoObservacionesView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('parto_observaciones', kwargs={'parto_pk': self.kwargs['parto_pk']})
+        # Si quieres volver a la misma pantalla de observaciones:
+        # return reverse('parto:parto_observaciones', kwargs={'parto_pk': self.kwargs['parto_pk']})
+
+        # Si prefieres volver al listado de partos después de firmar:
+        return reverse('parto:parto_lista')
