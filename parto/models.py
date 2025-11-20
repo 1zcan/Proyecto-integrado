@@ -29,6 +29,7 @@ class Parto(models.Model):
     acompanamiento_solo_expulsivo = models.BooleanField(default=False)
     piel_piel_madre_30min = models.BooleanField(default=False)
     piel_piel_acomp_30min = models.BooleanField(default=False)
+    gemelos = models.BooleanField(default=False, verbose_name="Gemelos")
 
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
