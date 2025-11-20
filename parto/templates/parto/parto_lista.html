@@ -115,7 +115,7 @@
                                 
                             {% endif %}
 
-                            {% if rol == 'profesional_salud' %}
+                            {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
                             {# ANTES: parto_observaciones #}
                             <a href="{% url 'parto:parto_observaciones' parto_pk=parto.pk %}" class="btn btn-sm btn-outline-warning" title="Firmar Observaciones">
                                 <i class="bi bi-eye"></i>
