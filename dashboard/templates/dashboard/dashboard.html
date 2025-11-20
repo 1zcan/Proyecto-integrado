@@ -130,25 +130,6 @@
         </div>
         {% endif %}
 
-        {# 7. GESTIÓN DE CATÁLOGOS (Solo TI) #}
-        {% if rol == 'ti_informatica' %}
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'catalogo:lista' %}" class="card-link">
-                <div class="card h-100 p-3">
-                    <div class="card-body">
-                        <div class="card-icon icon-orange">
-                            <i class="bi bi-tags"></i>
-                        </div>
-                        <h5 class="card-title">Catálogos del Sistema</h5>
-                        <p class="card-text text-muted">
-                            Administrar comunas, tipos de parto, vacunas y listas maestras.
-                        </p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endif %}
-
     </div>
     {% endwith %}
 </div>

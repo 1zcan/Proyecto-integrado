@@ -122,15 +122,6 @@
                         </a>
                         {% endif %}
                         
-                        {# ACCIÓN 4: Agregar Parto #}
-                        {# Acceso: Profesional y TI #}
-                        {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
-                        <a href="{% url 'parto:parto_crear_para_madre' madre.id %}" 
-                           class="btn btn-primary btn-sm ms-2" title="Agregar Parto">
-                            <i class="bi bi-plus-lg"></i> Parto
-                        </a>
-                        {% endif %}
-
                         {# ACCIÓN 5: Eliminar #}
                         {# Acceso: Profesional y TI #}
                         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
