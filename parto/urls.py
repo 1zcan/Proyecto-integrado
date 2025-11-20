@@ -8,7 +8,7 @@ urlpatterns = [
     
     # Formulario de creación/edición de Parto
     # Asumiendo CreateView y UpdateView separadas
-    path('nuevo/', views.PartoCreateUpdateView.as_view(), name='parto_crear'), # Placeholder
+    path('nuevo/', views.PartoCreateView.as_view(), name='parto_crear'),
     path('<int:pk>/editar/', views.PartoCreateUpdateView.as_view(), name='parto_editar'),
     
     # Formularios de Modelos relacionados (REM A21 y Robson)

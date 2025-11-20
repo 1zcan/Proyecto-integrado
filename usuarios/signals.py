@@ -5,8 +5,18 @@ from .models import Perfil
 
 @receiver(post_save, sender=User)
 def gestionar_perfil_usuario(sender, instance, created, **kwargs):
-    if created:
-        Perfil.objects.get_or_create(user=instance, defaults={'rol': 'usuario'})
-    else:
-        if hasattr(instance, 'perfil'):
-            instance.perfil.save()
+
+    # Crear el perfil si no existe
+    perfil, created_perfil = Perfil.objects.get_or_create(user=instance)
+
+    # Si el usuario es superusuario → rol TI / Informática
+    if instance.is_superuser or instance.is_staff:
+        perfil.rol = 'ti_informatica'
+        perfil.save()
+        return
+
+    # Si es un usuario normal y el perfil fue recién creado
+    # le asignamos el rol de usuario común
+    if created or created_perfil:
+        perfil.rol = 'usuario'
+        perfil.save()
