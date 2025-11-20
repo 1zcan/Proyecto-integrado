@@ -311,8 +311,12 @@ class RegistrarDefuncionRNView(LoginRequiredMixin, View):
                 ip_address=get_client_ip(),
             )
 
-            # El RN se elimina de la tabla principal (queda sólo en DefuncionRN)
-            rn.delete()
+            # ❌ IMPORTANTE: YA NO BORRAR EL RN
+            # rn.delete()
+
+            # Opcional: marcar alguna cosa en el RN (si quieres dejar rastro)
+            # rn.fecha_alta = rn.fecha_alta or timezone.now()
+            # rn.save()
 
             messages.success(request, "Defunción del recién nacido registrada correctamente.")
         else:
