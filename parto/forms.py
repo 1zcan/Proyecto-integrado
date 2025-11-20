@@ -5,7 +5,7 @@ from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 
 class PartoForm(forms.ModelForm):
     """
-    Formulario para crear/editar el registro del parto [cite: 42, 198]
+    Formulario para crear/editar el registro del parto
     """
     class Meta:
         model = Parto
@@ -24,52 +24,35 @@ class PartoForm(forms.ModelForm):
 
         widgets = {
             'fecha': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'class': 'form-control',
-                }
+                attrs={'type': 'date', 'class': 'form-control'}
             ),
             'hora': forms.TimeInput(
-                attrs={
-                    'type': 'time',
-                    'class': 'form-control',
-                }
+                attrs={'type': 'time', 'class': 'form-control'}
             ),
             'madre': forms.Select(attrs={'class': 'form-select'}),
             'tipo_parto': forms.Select(attrs={'class': 'form-select'}),
 
-            # EG (Semanas) → bloqueamos negativos en HTML
             'edad_gestacional_semanas': forms.NumberInput(
-                attrs={
-                    'class': 'form-control',
-                    'min': 0,
-                }
+                attrs={'class': 'form-control', 'min': 0}
             ),
 
             'establecimiento': forms.Select(attrs={'class': 'form-select'}),
         }
 
-    # Validación en el servidor para EG (Semanas)
     def clean_edad_gestacional_semanas(self):
         eg = self.cleaned_data.get('edad_gestacional_semanas')
-
         if eg is None:
-            return eg  # si el campo es opcional
+            return eg
 
         if eg < 0:
             raise forms.ValidationError("La EG (semanas) no puede ser negativa.")
-
-        # opcional: límite superior razonable
         if eg > 45:
             raise forms.ValidationError("La EG (semanas) no puede ser mayor a 45.")
-
         return eg
 
 
 class ModeloAtencionForm(forms.ModelForm):
-    """
-    Formulario para el Modelo de Atención (REM A21) [cite: 42, 204]
-    """
+    """Formulario para Modelo de Atención"""
     class Meta:
         model = ModeloAtencionParto
         fields = [
@@ -81,9 +64,7 @@ class ModeloAtencionForm(forms.ModelForm):
 
 
 class RobsonForm(forms.ModelForm):
-    """
-    Formulario para la Clasificación Robson [cite: 42, 210]
-    """
+    """Formulario para Clasificación Robson"""
     class Meta:
         model = RobsonParto
         fields = ['grupo', 'cesarea_electiva', 'cesarea_urgencia']
@@ -91,10 +72,19 @@ class RobsonForm(forms.ModelForm):
 
 class PartoObservacionForm(forms.ModelForm):
     """
-    Formulario para añadir observaciones firmadas [cite: 42, 216]
+    Formulario para añadir observaciones con firma simple
     """
-    clave_firma = forms.CharField(widget=forms.PasswordInput, required=True)
+    clave_firma = forms.CharField(
+        widget=forms.PasswordInput,
+        required=True,
+        label="Clave de Firma"
+    )
 
     class Meta:
         model = PartoObservacion
-        fields = ['texto']  # 'autor' y 'parto' se asignan en la vista
+        fields = ['texto', 'clave_firma']
+
+    def __init__(self, *args, **kwargs):
+        # Recibe el usuario desde la vista
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)

@@ -1,8 +1,8 @@
 # auditoria/views.py
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
-from django.utils.decorators import method_decorator  # 👈 Necesario
-from usuarios.decorators import role_required  # 👈 Decorador personalizado
+from django.utils.decorators import method_decorator
+from usuarios.decorators import role_required
 
 from .models import LogAccion
 
@@ -43,12 +43,13 @@ class LogListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         # Mantener los valores en el formulario de filtro
         context["filtro_modelo"] = self.request.GET.get("modelo", "").strip()
         context["filtro_accion"] = self.request.GET.get("accion", "").strip()
         context["filtro_q"] = self.request.GET.get("q", "").strip()
 
-        # Opcional: lista de acciones para el select
+        # Opcional: lista de acciones para el <select>
         context["acciones_disponibles"] = [
             ("", "Todas"),
             ("create", "Creación"),
