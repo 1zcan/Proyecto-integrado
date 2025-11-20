@@ -13,6 +13,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 
+# Importaciones del proyecto
 from usuarios.decorators import role_required
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm, MadreDeleteForm, DefuncionMadreForm
@@ -21,7 +22,9 @@ from auditoria.models import LogAccion
 from auditoria.signals import get_client_ip
 
 
-# --- VISTAS ESTÁNDAR (Gestión de Madres Activas) ---
+# ================================================
+#  VISTAS ESTÁNDAR (Gestión de Madres Activas)
+# ================================================
 
 @method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class MadreListView(ListView):
@@ -116,7 +119,6 @@ class MadreDeleteView(LoginRequiredMixin, View):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         form = MadreDeleteForm(request.POST, user=request.user)
         if form.is_valid():
-            # Auditoria
             razon = form.cleaned_data["razon"]
             LogAccion.objects.create(
                 usuario=request.user,
@@ -126,22 +128,25 @@ class MadreDeleteView(LoginRequiredMixin, View):
                 detalle=f"Eliminación Madre RUT={madre.rut}. Razón: {razon}",
                 ip_address=get_client_ip(),
             )
-            madre.partos.all().delete() # Borrar partos asociados (cascade manual si necesario)
+            madre.partos.all().delete() # Borrar partos asociados
             madre.delete() # Borrado físico o lógico según modelo
             messages.success(request, "Madre eliminada correctamente.")
             return redirect("madre:madre_lista")
         return render(request, self.template_name, {"madre": madre, "form": form})
 
 
-# --- 🟢 SECCIÓN DE DEFUNCIONES (AQUÍ ESTÁ LA CORRECCIÓN) ---
+# ================================================
+#  SECCIÓN DE DEFUNCIONES
+# ================================================
 
+# 1. REGISTRAR DEFUNCIÓN (Acción del Modal)
 @method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
     def post(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         password = request.POST.get("password_confirm")
         
-        # 1. Validar Contraseña para firma simple
+        # Validar Contraseña para firma simple
         user = authenticate(request, username=request.user.username, password=password)
         
         if user:
@@ -150,7 +155,7 @@ class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
                 registro = form.save(commit=False)
                 registro.madre = madre
                 
-                # 🟢 IMPORTANTE: Aquí guardamos quién registró la defunción
+                # 🟢 AQUÍ SE GUARDA EL USUARIO (CORRECCIÓN APLICADA)
                 registro.usuario_registra = request.user 
                 
                 registro.save()
@@ -159,7 +164,6 @@ class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
                 madre.activo = False 
                 madre.save()
                 
-                # Auditoría
                 LogAccion.objects.create(
                     usuario=request.user,
                     accion=LogAccion.ACCION_UPDATE,
@@ -178,11 +182,11 @@ class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
         return redirect("madre:madre_lista")
 
 
-# 1. LISTA DE MADRES FALLECIDAS
+# 2. LISTA DE MADRES FALLECIDAS
 @method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class MadreDefuncionesListView(ListView):
     model = Madre
-    template_name = "madre/madre_defunciones_lista.html" # O tu template de reportes/reporte_defunciones.html
+    template_name = "madre/madre_defunciones_lista.html"
     context_object_name = "madres_fallecidas"
     paginate_by = 25
 
@@ -196,7 +200,7 @@ class MadreDefuncionesListView(ListView):
             .order_by('-defunciones__fecha')
         )
 
-# 2. GENERAR PDF INDIVIDUAL
+# 3. GENERAR PDF DEFUNCIÓN INDIVIDUAL
 @method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class MadreDefuncionPDFView(View):
     def get(self, request, pk):
@@ -229,7 +233,7 @@ class MadreDefuncionPDFView(View):
         c.drawString(inch, y, f"RUT: {madre.rut}")
         
         y -= 0.25*inch
-        # Formatear fecha nacimiento
+        # Corrección formato fecha (strftime)
         fecha_nac_fmt = madre.fecha_nacimiento.strftime('%d-%m-%Y')
         c.drawString(inch, y, f"Fecha Nacimiento: {fecha_nac_fmt}")
 
@@ -240,13 +244,16 @@ class MadreDefuncionPDFView(View):
         y -= 0.3*inch
         c.setFont("Helvetica", 11)
         
-        # Formatear fecha defunción
+        # Corrección formato fecha hora
         fecha_def_fmt = defuncion.fecha.strftime('%d/%m/%Y %H:%M')
         c.drawString(inch, y, f"Fecha y Hora: {fecha_def_fmt}")
         
         y -= 0.25*inch
-        # Obtener nombre del registrador (o "Sistema")
-        registrador = defuncion.usuario_registra.get_full_name() if defuncion.usuario_registra else defuncion.usuario_registra.username if defuncion.usuario_registra else "Sistema"
+        # Lógica segura para mostrar usuario
+        registrador = "Sistema"
+        if defuncion.usuario_registra:
+            registrador = defuncion.usuario_registra.get_full_name() or defuncion.usuario_registra.username
+            
         c.drawString(inch, y, f"Registrado por: {registrador}")
 
         y -= 0.4*inch
@@ -255,7 +262,7 @@ class MadreDefuncionPDFView(View):
         y -= 0.25*inch
         c.setFont("Helvetica", 11)
         
-        # Texto largo de la causa
+        # Manejo de texto largo para la causa
         import textwrap
         text_object = c.beginText(inch, y)
         text_object.setFont("Helvetica", 11)

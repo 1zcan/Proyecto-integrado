@@ -1,4 +1,3 @@
-# recien_nacido/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, UpdateView, DetailView, CreateView, View
 from django.urls import reverse, reverse_lazy
@@ -7,19 +6,27 @@ from django.utils import timezone
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate
+from django.http import HttpResponse
+import io
 
+# Librería PDF
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+
+# Importaciones del proyecto
 from usuarios.decorators import role_required
-from .forms import DefuncionRNForm
-from .models import RecienNacido, ProfiRN, RNObservacion
-from .forms import RNForm, ProfiRNForm, RNObservacionForm, RNDeleteForm
+from .models import RecienNacido, ProfiRN, RNObservacion, DefuncionRN
+from .forms import RNForm, ProfiRNForm, RNObservacionForm, RNDeleteForm, DefuncionRNForm
+from parto.models import Parto
 from auditoria.models import LogAccion
 from auditoria.signals import get_client_ip
 
-# LISTA: Profesional, Técnico y TI
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+
+# ================================================
+#  1. LISTA GENERAL DE RECIÉN NACIDOS
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNListView(LoginRequiredMixin, ListView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_lista.html'
@@ -27,7 +34,7 @@ class RNListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        # Solo RN sin defunciones
+        # Solo RN activos (sin defunciones)
         return (
             super()
             .get_queryset()
@@ -38,17 +45,18 @@ class RNListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Contador para el botón de "Validar Altas"
         context['recien_nacidos_pendientes_count'] = RecienNacido.objects.filter(
             fecha_alta__isnull=True,
             defunciones__isnull=True
         ).distinct().count()
         return context
 
-# LISTA PENDIENTES ALTA
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+
+# ================================================
+#  2. LISTA DE PENDIENTES DE ALTA
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNAltaPendienteListView(LoginRequiredMixin, ListView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_lista_pendientes_alta.html'
@@ -67,16 +75,15 @@ class RNAltaPendienteListView(LoginRequiredMixin, ListView):
         return context
 
 
-# CREAR RN
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  3. CREAR RECIÉN NACIDO
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNCreateView(LoginRequiredMixin, CreateView):
     model = RecienNacido
     form_class = RNForm
     template_name = 'recien_nacido/rn_form.html'
-
+    
     def get_success_url(self):
         return reverse('recien_nacido:rn_lista')
 
@@ -91,11 +98,10 @@ class RNCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-# EDITAR RN
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  4. EDITAR RECIÉN NACIDO
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNUpdateView(LoginRequiredMixin, UpdateView):
     model = RecienNacido
     form_class = RNForm
@@ -103,18 +109,17 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('recien_nacido:rn_lista')
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_creating'] = False
         return context
 
 
-# VALIDAR ALTA
-@method_decorator(
-    role_required(['profesional_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  5. VALIDAR ALTA (Detalle)
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RNValidarAltaView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_validar_alta.html'
@@ -133,7 +138,8 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
         if rn.apgar_5 is None:
             datos_criticos_completos = False
             mensajes_error.append("El APGAR a los 5 minutos es un dato crítico y falta.")
-
+        
+        # Verifica si existe al menos una profilaxis registrada
         profilaxis_completa = rn.profilaxis_set.exists()
         if not profilaxis_completa:
             datos_criticos_completos = False
@@ -163,7 +169,7 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
                 messages.error(request, "No se puede validar el alta porque faltan datos críticos.")
                 context = self.get_context_data()
                 return render(request, self.template_name, context)
-
+            
             rn.fecha_alta = timezone.now()
             rn.save()
             messages.success(request, "Alta validada correctamente.")
@@ -172,15 +178,14 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
         elif action == "enviar_correccion":
             messages.warning(request, "El registro se ha marcado para corrección.")
             return redirect('recien_nacido:rn_editar', pk=rn.pk)
-
+        
         return redirect(request.path_info)
 
 
-# PROFILAXIS
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  6. PROFILAXIS
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNProfilaxisView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_profilaxis.html'
@@ -201,16 +206,16 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
             prof.registrado_por = request.user
             prof.save()
             return redirect(request.path_info)
+        
         context = self.get_context_data()
         context['profilaxis_form'] = form
         return render(request, self.template_name, context)
 
 
-# OBSERVACIONES
-@method_decorator(
-    role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  7. OBSERVACIONES
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
 class RNObservacionesView(LoginRequiredMixin, DetailView):
     model = RecienNacido
     template_name = 'recien_nacido/rn_observaciones.html'
@@ -231,16 +236,16 @@ class RNObservacionesView(LoginRequiredMixin, DetailView):
             obs.autor = request.user
             obs.save()
             return redirect(request.path_info)
+        
         context = self.get_context_data()
         context['observacion_form'] = form
         return render(request, self.template_name, context)
 
 
-# ELIMINAR RN
-@method_decorator(
-    role_required(['profesional_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  8. ELIMINAR RN (Borrado normal)
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RNDeleteView(LoginRequiredMixin, View):
     template_name = "recien_nacido/rn_confirm_delete.html"
 
@@ -272,54 +277,140 @@ class RNDeleteView(LoginRequiredMixin, View):
         return redirect("recien_nacido:rn_lista")
 
 
-@method_decorator(
-    role_required(['profesional_salud', 'ti_informatica']),
-    name='dispatch'
-)
+# ================================================
+#  9. REGISTRAR DEFUNCIÓN
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
 class RegistrarDefuncionRNView(LoginRequiredMixin, View):
     def post(self, request, pk):
         rn = get_object_or_404(RecienNacido, pk=pk)
-
-        # Validar contraseña del usuario
         password = request.POST.get("password_confirm")
-        user = authenticate(
-            request,
-            username=request.user.username,
-            password=password
+        user = authenticate(request, username=request.user.username, password=password)
+        
+        if user:
+            form = DefuncionRNForm(request.POST)
+            if form.is_valid():
+                registro = form.save(commit=False)
+                registro.rn = rn
+                registro.usuario_registra = request.user
+                registro.save()
+
+                # Auditoría
+                detalle = f"Defunción RN ID={rn.id}. Razón: {registro.razon}."
+                LogAccion.objects.create(
+                    usuario=request.user,
+                    accion=LogAccion.ACCION_UPDATE,
+                    modelo="RecienNacido",
+                    objeto_id=str(rn.pk),
+                    detalle=detalle,
+                    ip_address=get_client_ip(),
+                )
+
+                messages.success(request, "Defunción del recién nacido registrada correctamente.")
+            else:
+                messages.error(request, "Error en el formulario.")
+        else:
+            messages.error(request, "Contraseña incorrecta.")
+            
+        return redirect('recien_nacido:rn_lista')
+
+
+# ================================================
+#  10. LISTAR DEFUNCIONES RN
+# ================================================
+@method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
+class RNDefuncionesListView(ListView):
+    model = RecienNacido
+    template_name = "recien_nacido/rn_defunciones_lista.html"
+    context_object_name = "rn_fallecidos"
+    paginate_by = 25
+
+    def get_queryset(self):
+        # Filtra RNs que tienen registro de defunción
+        return (
+            RecienNacido.objects
+            .select_related("parto__madre")
+            .filter(defunciones__isnull=False)
+            .distinct()
+            .order_by('-defunciones__fecha')
         )
-        if user is None:
-            messages.error(request, "La contraseña ingresada no es válida.")
+
+
+# ================================================
+#  11. GENERAR PDF DEFUNCIÓN RN
+# ================================================
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+class RNDefuncionPDFView(View):
+    def get(self, request, pk):
+        rn = get_object_or_404(RecienNacido, pk=pk)
+        defuncion = rn.defunciones.last()
+
+        if not defuncion:
+            messages.error(request, "No se encontró registro de defunción.")
             return redirect('recien_nacido:rn_lista')
 
-        form = DefuncionRNForm(request.POST)
-        if form.is_valid():
-            registro = form.save(commit=False)
-            registro.rn = rn
-            registro.usuario_registra = request.user
-            registro.save()
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
+        
+        # Encabezado
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(inch, height - inch, "Certificado de Defunción Neonatal")
+        c.setFont("Helvetica", 10)
+        c.drawString(inch, height - 1.2*inch, "Hosp. Clínico Herminda Martín - Registro Interno")
+        c.line(inch, height - 1.4*inch, width - inch, height - 1.4*inch)
 
-            detalle = (
-                f"Defunción RN ID={rn.id} (madre {rn.parto.madre.rut}). "
-                f"Razón: {registro.razon}."
-            )
-            LogAccion.objects.create(
-                usuario=request.user,
-                accion=LogAccion.ACCION_DELETE,
-                modelo="RecienNacido",
-                objeto_id=str(rn.pk),
-                detalle=detalle,
-                ip_address=get_client_ip(),
-            )
+        # Datos RN
+        y = height - 2*inch
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(inch, y, "1. DATOS DEL RECIÉN NACIDO")
+        y -= 0.3*inch
+        c.setFont("Helvetica", 11)
+        c.drawString(inch, y, f"Madre: {rn.parto.madre.nombre_completo}")
+        y -= 0.25*inch
+        c.drawString(inch, y, f"RUT Madre: {rn.parto.madre.rut}")
+        y -= 0.25*inch
+        c.drawString(inch, y, f"Sexo: {rn.get_sexo_display()}")
+        y -= 0.25*inch
+        fecha_nac_fmt = rn.parto.fecha.strftime('%d-%m-%Y')
+        c.drawString(inch, y, f"Fecha Nacimiento: {fecha_nac_fmt}")
 
-            # ❌ IMPORTANTE: YA NO BORRAR EL RN
-            # rn.delete()
+        # Datos Defunción
+        y -= 0.6*inch
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(inch, y, "2. DETALLES DEL FALLECIMIENTO")
+        y -= 0.3*inch
+        c.setFont("Helvetica", 11)
+        
+        fecha_def_fmt = defuncion.fecha.strftime('%d/%m/%Y %H:%M')
+        c.drawString(inch, y, f"Fecha y Hora: {fecha_def_fmt}")
+        
+        y -= 0.25*inch
+        # Lógica segura para nombre de usuario
+        registrador = "Sistema"
+        if defuncion.usuario_registra:
+            registrador = defuncion.usuario_registra.get_full_name() or defuncion.usuario_registra.username
+        c.drawString(inch, y, f"Registrado por: {registrador}")
 
-            # Opcional: marcar alguna cosa en el RN (si quieres dejar rastro)
-            # rn.fecha_alta = rn.fecha_alta or timezone.now()
-            # rn.save()
+        y -= 0.4*inch
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(inch, y, "Causa / Razón Clínica:")
+        y -= 0.25*inch
+        c.setFont("Helvetica", 11)
+        
+        # Texto largo
+        import textwrap
+        text_object = c.beginText(inch, y)
+        text_object.setFont("Helvetica", 11)
+        lineas = textwrap.wrap(defuncion.razon, width=80)
+        for linea in lineas:
+            text_object.textLine(linea)
+        c.drawText(text_object)
 
-            messages.success(request, "Defunción del recién nacido registrada correctamente.")
-        else:
-            messages.error(request, "Error al registrar la defunción del recién nacido.")
-
-        return redirect('recien_nacido:rn_lista')
+        c.showPage()
+        c.save()
+        
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Defuncion_RN_{rn.pk}.pdf"'
+        return response
