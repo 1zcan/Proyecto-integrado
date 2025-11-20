@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Altas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="h3 mb-3">Historial de Altas de Recién Nacidos</h1>
+    <p class="text-muted mb-4">
+        Listado de egresos donde la validación de alta ha sido registrada (campo <code>fecha_alta</code> completado).
+    </p>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input type="date" name="fecha_desde" class="form-control"
+                   value="{{ fecha_desde|default_if_none:'' }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="fecha_hasta" class="form-control"
+                   value="{{ fecha_hasta|default_if_none:'' }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="bi bi-filter"></i> Filtrar
+            </button>
+            <a href="{% url 'reportes:reportes_historial_altas' %}" class="btn btn-outline-secondary">
+                Limpiar
+            </a>
+        </div>
+    </form>
+
+    <!-- Tabla -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Fecha Alta</th>
+                        <th scope="col">Madre</th>
+                        <th scope="col">RUT</th>
+                        <th scope="col">Fecha Parto</th>
+                        <th scope="col">Sexo RN</th>
+                        <th scope="col">Peso (g)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rn in altas %}
+                    <tr>
+                        <td>{{ rn.fecha_alta|date:"d/m/Y H:i" }}</td>
+                        <td>{{ rn.parto.madre.nombre_completo }}</td>
+                        <td>{{ rn.parto.madre.rut }}</td>
+                        <td>{{ rn.parto.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ rn.get_sexo_display }}</td>
+                        <td>{{ rn.peso }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                            No hay altas registradas con los criterios seleccionados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

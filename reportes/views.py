@@ -7,6 +7,8 @@ from django.utils.decorators import method_decorator  # 👈 Necesario
 from usuarios.decorators import role_required  # 👈 Decorador personalizado
 import datetime
 import json 
+from recien_nacido.models import RecienNacido
+
 
 from .forms import FiltroReporteREMForm, FiltroReporteServicioSaludForm
 from . import services
@@ -120,4 +122,31 @@ class ReporteCalidadView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['datos'] = services.get_datos_calidad()
+        return context
+# Historial de Altas de Recién Nacidos
+@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+class ReporteHistorialAltasView(LoginRequiredMixin, TemplateView):
+    template_name = 'reportes/reportes_historial_altas.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        qs = RecienNacido.objects.filter(
+            fecha_alta__isnull=False
+        ).select_related(
+            'parto', 'parto__madre'
+        ).order_by('-fecha_alta')
+
+        # Filtros opcionales por fecha (GET)
+        fecha_desde = self.request.GET.get('fecha_desde')
+        fecha_hasta = self.request.GET.get('fecha_hasta')
+
+        if fecha_desde:
+            qs = qs.filter(fecha_alta__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha_alta__date__lte=fecha_hasta)
+
+        context['altas'] = qs
+        context['fecha_desde'] = fecha_desde
+        context['fecha_hasta'] = fecha_hasta
         return context

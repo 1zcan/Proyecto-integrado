@@ -28,4 +28,10 @@ urlpatterns = [
         views.ReporteCalidadView.as_view(), 
         name='reportes_calidad'
     ),
+        path(
+        'historial-altas/',
+        views.ReporteHistorialAltasView.as_view(),
+        name='reportes_historial_altas'
+    ),
+
 ]

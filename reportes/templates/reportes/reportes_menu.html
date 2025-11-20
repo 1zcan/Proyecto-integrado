@@ -10,7 +10,7 @@
     <div class="row g-4 mt-4">
         
         <!-- Tarjeta 1: Reportes REM -->
-        <div class="col-lg-4">
+        <div class="col-md-6 col-lg-3">
             <a href="{% url 'reportes:reportes_rem' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body text-center">
@@ -25,7 +25,7 @@
         </div>
 
         <!-- Tarjeta 2: Reporte Servicio Salud -->
-        <div class="col-lg-4">
+        <div class="col-md-6 col-lg-3">
             <a href="{% url 'reportes:reportes_servicio_salud' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body text-center">
@@ -40,7 +40,7 @@
         </div>
 
         <!-- Tarjeta 3: Control de Calidad / Validar Alta -->
-        <div class="col-lg-4">
+        <div class="col-md-6 col-lg-3">
             <a href="{% url 'reportes:reportes_calidad' %}" class="card-link">
                 <div class="card h-100 p-3">
                     <div class="card-body text-center">
@@ -53,7 +53,20 @@
                 </div>
             </a>
         </div>
-
+                <!-- Tarjeta 4: Historial de Altas -->
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'reportes:reportes_historial_altas' %}" class="card-link">
+                <div class="card h-100 p-3">
+                    <div class="card-body text-center">
+                        <div class="card-icon icon-pink">
+                            <i class="bi bi-journal-medical"></i>
+                        </div>
+                        <h5 class="card-title">Historial de Altas</h5>
+                        <p class="card-text text-muted">Listado de Recién Nacidos con alta validada.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -88,5 +101,10 @@
     .card-title {
         font-weight: 600;
     }
+        .icon-pink { 
+        color: #d63384; 
+        background-color: #fde5f2; 
+    }
+
 </style>
 {% endblock %}
