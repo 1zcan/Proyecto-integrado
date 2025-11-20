@@ -33,5 +33,8 @@ urlpatterns = [
         views.ReporteHistorialAltasView.as_view(),
         name='reportes_historial_altas'
     ),
+    path
+    ('defunciones/', views.ReporteDefuncionesView.as_view(), name='reportes_defunciones'),
+
 
 ]

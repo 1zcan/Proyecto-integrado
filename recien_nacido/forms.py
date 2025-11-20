@@ -3,6 +3,7 @@ from django import forms
 from .models import RecienNacido, ProfiRN, RNObservacion
 from parto.models import Parto
 from catalogo.models import Catalogo
+from .models import DefuncionRN
 
 
 class RNForm(forms.ModelForm):
@@ -168,3 +169,10 @@ class RNDeleteForm(forms.Form):
             raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
 
         return clave
+class DefuncionRNForm(forms.ModelForm):
+    class Meta:
+        model = DefuncionRN
+        fields = ['razon']
+        widgets = {
+            'razon': forms.Textarea(attrs={'class': 'form-control', 'rows': 4})
+        }

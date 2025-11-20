@@ -3,6 +3,8 @@ from django import forms
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from catalogo.models import Catalogo
 import re
+from .models import DefuncionMadre
+
 
 
 class MadreForm(forms.ModelForm):
@@ -166,3 +168,11 @@ class MadreDeleteForm(forms.Form):
             raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
 
         return clave
+
+class DefuncionMadreForm(forms.ModelForm):
+    class Meta:
+        model = DefuncionMadre
+        fields = ['razon']
+        widgets = {
+            'razon': forms.Textarea(attrs={'class': 'form-control', 'rows': 4})
+        }

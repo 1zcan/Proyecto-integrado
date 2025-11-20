@@ -13,16 +13,12 @@
     </div>
 
     <div class="d-flex gap-2">
-        {# BOTÓN 1: Ir a Listado de Partos #}
-        {# Acceso: Técnico, Profesional y TI #}
         {% if rol == 'tecnico_salud' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
         <a href="{% url 'parto:parto_lista' %}" class="btn btn-outline-primary">
             <i class="bi bi-baby"></i> Listado de Partos
         </a>
         {% endif %}
 
-        {# BOTÓN 2: Registrar Nueva Madre #}
-        {# Acceso: Administrativo, Profesional y TI #}
         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
         <a href="{% url 'madre:madre_crear' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Registrar Nueva Madre
@@ -94,9 +90,7 @@
                     <td>{{ madre.cesfam.valor|default:"-" }}</td>
                     
                     <td class="text-nowrap">
-                        
-                        {# ACCIÓN 1: Editar (Datos) #}
-                        {# Acceso: Administrativo, Profesional y TI #}
+
                         {% if rol == 'administrativo' or rol == 'profesional_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre:madre_editar' pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-primary" title="Editar Datos Demográficos">
@@ -104,8 +98,6 @@
                         </a>
                         {% endif %}
 
-                        {# ACCIÓN 2: Tamizajes (Clínico) #}
-                        {# Acceso: Profesional, Técnico y TI #}
                         {% if rol == 'profesional_salud' or rol == 'tecnico_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre:madre_tamizajes' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-warning" title="Ver Tamizajes">
@@ -113,8 +105,6 @@
                         </a>
                         {% endif %}
 
-                        {# ACCIÓN 3: Observaciones (Firma) #}
-                        {# Acceso: Profesional y TI (Acceso Total) #}
                         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre:madre_observaciones' madre_pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-secondary" title="Firmar Observaciones">
@@ -122,13 +112,72 @@
                         </a>
                         {% endif %}
                         
-                        {# ACCIÓN 5: Eliminar #}
-                        {# Acceso: Profesional y TI #}
                         {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
                         <a href="{% url 'madre:madre_eliminar' pk=madre.pk %}" 
                            class="btn btn-sm btn-outline-danger ms-1" title="Eliminar Registro">
                             <i class="bi bi-trash"></i>
                         </a>
+                        {% endif %}
+
+                        {% if rol == 'profesional_salud' or rol == 'ti_informatica' %}
+                        <button class="btn btn-sm btn-danger ms-1"
+                                title="Registrar Defunción"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalDefuncionMadre{{ madre.pk }}">
+                            <i class="bi bi-person-x"></i>
+                        </button>
+
+                        <!-- MODAL DE DEFUNCIÓN DE MADRE (UNO POR FILA) -->
+                        <div class="modal fade" id="modalDefuncionMadre{{ madre.pk }}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <form method="POST" action="{% url 'madre:madre_defuncion' pk=madre.pk %}">
+                              {% csrf_token %}
+                              <div class="modal-content">
+
+                                <div class="modal-header">
+                                  <h5 class="modal-title">Registrar Defunción</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+
+                                  <label class="form-label">Razón de la Muerte</label>
+                                  <textarea name="razon" class="form-control mb-3" rows="3" required></textarea>
+
+                                  <label class="form-label">Hora de la Muerte</label>
+                                  <input type="time" name="hora_muerte" class="form-control mb-3" required>
+
+                                  <label class="form-label">Estado del Recién Nacido</label>
+                                  <select name="estado_rn" class="form-select mb-3" required>
+                                      <option value="" disabled selected>Seleccione una opción</option>
+                                      <option value="vivo">Vivo</option>
+                                      <option value="muerto">Muerto</option>
+                                      <option value="critico">Crítico</option>
+                                  </select>
+
+                                  <hr class="my-3">
+                                  <label class="form-label">Confirme con su Clave</label>
+                                  <input type="password"
+                                         name="password_confirm"
+                                         class="form-control"
+                                         required
+                                         placeholder="Ingrese su contraseña de usuario">
+
+                                </div>
+
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                      Cancelar
+                                  </button>
+                                  <button type="submit" class="btn btn-danger">
+                                      Guardar
+                                  </button>
+                                </div>
+
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                         {% endif %}
 
                     </td>

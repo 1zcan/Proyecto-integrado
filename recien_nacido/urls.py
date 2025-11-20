@@ -23,4 +23,6 @@ urlpatterns = [
     path('<int:pk>/validar-alta/', views.RNValidarAltaView.as_view(), name='rn_validar_alta'),
     path('<int:pk>/profilaxis/', views.RNProfilaxisView.as_view(), name='rn_profilaxis'),
     path('<int:pk>/observaciones/', views.RNObservacionesView.as_view(), name='rn_observaciones'),
+    path('rn/<int:pk>/defuncion/', views.RegistrarDefuncionRNView.as_view(), name='rn_defuncion'),
+
 ]

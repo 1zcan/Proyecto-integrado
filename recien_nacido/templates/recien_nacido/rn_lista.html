@@ -86,6 +86,58 @@
                            class="btn btn-sm btn-outline-danger ms-1" title="Eliminar RN">
                             <i class="bi bi-trash"></i>
                         </a>
+
+                        <!-- BOTÓN DEFUNCIÓN -->
+                        <button class="btn btn-sm btn-danger ms-1"
+                                title="Registrar Defunción del RN"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalDefuncionRN{{ rn.pk }}">
+                            <i class="bi bi-person-x"></i>
+                        </button>
+
+                        <!-- MODAL DEFUNCIÓN RN (sin estado RN, con clave) -->
+                        <div class="modal fade" id="modalDefuncionRN{{ rn.pk }}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <form method="POST" action="{% url 'recien_nacido:rn_defuncion' pk=rn.pk %}">
+                              {% csrf_token %}
+                              <div class="modal-content">
+
+                                <div class="modal-header">
+                                  <h5 class="modal-title">Registrar Defunción del Recién Nacido</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+
+                                  <label class="form-label">Razón de la Muerte</label>
+                                  <textarea name="razon" class="form-control mb-3" rows="3" required></textarea>
+
+                                  <label class="form-label">Hora de la Muerte</label>
+                                  <input type="time" name="hora_muerte" class="form-control mb-3" required>
+
+                                  <hr class="my-3">
+                                  <label class="form-label">Confirme con su Clave</label>
+                                  <input type="password"
+                                         name="password_confirm"
+                                         class="form-control"
+                                         required
+                                         placeholder="Ingrese su contraseña de usuario">
+
+                                </div>
+
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                      Cancelar
+                                  </button>
+                                  <button type="submit" class="btn btn-danger">
+                                      Guardar
+                                  </button>
+                                </div>
+
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                         {% endif %}
 
                     </td>
@@ -105,7 +157,6 @@
 {% endwith %}
 
 {% endblock content %}
-
 
 {% block styles %}
 <style>

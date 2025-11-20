@@ -1,7 +1,9 @@
 # madre/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from catalogo.models import Catalogo   # <--- NECESARIO PARA OPCIÓN B
+from catalogo.models import Catalogo
+from django.conf import settings
+
 
 
 class Madre(models.Model):
@@ -78,3 +80,17 @@ class MadreObservacion(models.Model):
         verbose_name = "Observación de Madre"
         verbose_name_plural = "Observaciones de Madre"
         ordering = ['-fecha']
+
+class DefuncionMadre(models.Model):
+    madre = models.ForeignKey(Madre, on_delete=models.CASCADE, related_name='defunciones')
+    fecha = models.DateTimeField(auto_now_add=True)
+    razon = models.TextField()
+    usuario_registra = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name = "Defunción de Madre"
+        verbose_name_plural = "Defunciones de Madres"
+
+    def __str__(self):
+        return f"Defunción de {self.madre} - {self.fecha}"
+

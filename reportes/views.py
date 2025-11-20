@@ -8,6 +8,8 @@ from usuarios.decorators import role_required  # 👈 Decorador personalizado
 import datetime
 import json 
 from recien_nacido.models import RecienNacido
+from madre.models import DefuncionMadre
+from recien_nacido.models import DefuncionRN
 
 
 from .forms import FiltroReporteREMForm, FiltroReporteServicioSaludForm
@@ -149,4 +151,12 @@ class ReporteHistorialAltasView(LoginRequiredMixin, TemplateView):
         context['altas'] = qs
         context['fecha_desde'] = fecha_desde
         context['fecha_hasta'] = fecha_hasta
+        return context
+class ReporteDefuncionesView(LoginRequiredMixin, TemplateView):
+    template_name = "reportes/reportes_defunciones.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["madres"] = DefuncionMadre.objects.select_related("madre").order_by("-fecha")
+        context["rn"] = DefuncionRN.objects.select_related("rn").order_by("-fecha")
         return context

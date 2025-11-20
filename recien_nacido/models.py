@@ -143,3 +143,16 @@ class RNObservacion(models.Model):
 
     def __str__(self):
         return f"Obs de {self.autor} en {self.rn} ({self.fecha.date()})"
+    
+class DefuncionRN(models.Model):
+    rn = models.ForeignKey(RecienNacido, on_delete=models.CASCADE, related_name='defunciones')
+    fecha = models.DateTimeField(auto_now_add=True)
+    razon = models.TextField()
+    usuario_registra = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name = "Defunción de Recién Nacido"
+        verbose_name_plural = "Defunciones de Recién Nacidos"
+
+    def __str__(self):
+        return f"Defunción RN {self.rn} - {self.fecha}"

@@ -1,11 +1,14 @@
+# madre/views.py
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import ListView, CreateView, UpdateView, View
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from usuarios.decorators import role_required
+from django.contrib.auth import authenticate
 
+from usuarios.decorators import role_required
+from .forms import DefuncionMadreForm
 from .models import Madre, TamizajeMaterno, MadreObservacion
 from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm, MadreDeleteForm
 from recien_nacido.models import RecienNacido
@@ -27,7 +30,14 @@ class MadreListView(ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        qs = Madre.objects.select_related("comuna", "cesfam").filter(activo=True)
+        # Solo madres activas y SIN defunción registrada
+        qs = (
+            Madre.objects
+            .select_related("comuna", "cesfam")
+            .filter(activo=True, defunciones__isnull=True)
+            .distinct()
+        )
+
         rut = self.request.GET.get("rut")
         comuna = self.request.GET.get("comuna")
         cesfam = self.request.GET.get("cesfam")
@@ -63,7 +73,6 @@ class MadreCreateView(CreateView):
     model = Madre
     form_class = MadreForm
     template_name = "madre/madre_form.html"
-    # ANTES: success_url = reverse_lazy('madre_lista')
     success_url = reverse_lazy('madre:madre_lista')
 
 
@@ -76,12 +85,10 @@ class MadreUpdateView(UpdateView):
     model = Madre
     form_class = MadreForm
     template_name = "madre/madre_form.html"
-    # ANTES: success_url = reverse_lazy('madre_lista')
     success_url = reverse_lazy('madre:madre_lista')
 
 
 # DATOS CLÍNICOS (Tamizajes): EXCLUSIVO Salud (Profesional y Técnico).
-# Administrativo NO entra aquí.
 @method_decorator(
     role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -97,12 +104,10 @@ class TamizajeCreateUpdateView(UpdateView):
         return obj
 
     def get_success_url(self):
-        # ANTES: reverse_lazy('madre_lista')
         return reverse_lazy('madre:madre_lista')
 
 
-# FIRMA (Observaciones): EXCLUSIVO Profesional de Salud (Médico/Matrona).
-# Técnico NO firma.
+# FIRMA (Observaciones)
 @method_decorator(
     role_required(['profesional_salud', 'ti_informatica']),
     name='dispatch'
@@ -131,12 +136,13 @@ class MadreObservacionesView(LoginRequiredMixin, CreateView):
         return context
 
     def get_success_url(self):
-        # ANTES: reverse_lazy('madre_observaciones', kwargs={...})
-        return reverse_lazy('madre:madre_observaciones',
-                            kwargs={'madre_pk': self.kwargs['madre_pk']})
+        return reverse_lazy(
+            'madre:madre_observaciones',
+            kwargs={'madre_pk': self.kwargs['madre_pk']}
+        )
 
 
-# ELIMINAR: Solo Profesionales (Responsables) y TI (Soporte técnico).
+# ELIMINAR: Solo Profesionales y TI.
 @method_decorator(
     role_required(['profesional_salud', 'ti_informatica']),
     name='dispatch'
@@ -189,5 +195,57 @@ class MadreDeleteView(LoginRequiredMixin, View):
         madre.delete()
 
         messages.success(request, "Madre y registros asociados eliminados correctamente.")
-        # ANTES: redirect("madre_lista")
+        return redirect("madre:madre_lista")
+
+
+# DEFUNCIÓN DE MADRE (con contraseña y sin borrar el registro)
+@method_decorator(
+    role_required(['profesional_salud', 'ti_informatica']),
+    name='dispatch'
+)
+class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        madre = get_object_or_404(Madre, pk=pk, activo=True)
+
+        # 1) Validar contraseña del usuario
+        password = request.POST.get("password_confirm")
+        user = authenticate(
+            request,
+            username=request.user.username,
+            password=password
+        )
+        if user is None:
+            messages.error(request, "La contraseña ingresada no es válida.")
+            return redirect("madre:madre_lista")
+
+        # 2) Grabar defunción
+        form = DefuncionMadreForm(request.POST)
+        if form.is_valid():
+            registro = form.save(commit=False)
+            registro.madre = madre
+            registro.usuario_registra = request.user
+            registro.save()
+
+            # 3) Marcar madre como inactiva (para que salga del listado)
+            madre.activo = False
+            madre.save()
+
+            # 4) Log de auditoría
+            detalle = (
+                f"Defunción de Madre ID={madre.id}, RUT={madre.rut}. "
+                f"Razón: {registro.razon}."
+            )
+            LogAccion.objects.create(
+                usuario=request.user,
+                accion=LogAccion.ACCION_UPDATE,
+                modelo="Madre",
+                objeto_id=str(madre.pk),
+                detalle=detalle,
+                ip_address=get_client_ip(),
+            )
+
+            messages.success(request, "Defunción de la madre registrada correctamente.")
+        else:
+            messages.error(request, "Error al registrar la defunción.")
+
         return redirect("madre:madre_lista")

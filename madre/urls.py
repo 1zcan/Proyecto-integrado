@@ -22,4 +22,8 @@ urlpatterns = [
         views.MadreObservacionesView.as_view(),
         name='madre_observaciones'
     ),
+    path(
+        'madre/<int:pk>/defuncion/', views.RegistrarDefuncionMadreView.as_view(), name='madre_defuncion'
+        ),
+
 ]
