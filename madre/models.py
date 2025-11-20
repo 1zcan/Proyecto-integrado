@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from catalogo.models import Catalogo
 from django.conf import settings
 
-
-
 class Madre(models.Model):
     rut = models.CharField(max_length=12, unique=True)
     nombre_completo = models.CharField(max_length=255)
@@ -38,13 +36,11 @@ class Madre(models.Model):
 
     class Meta:
         ordering = ['-id']
+        verbose_name = "Ficha Madre"
+        verbose_name_plural = "Fichas Madres"
 
     def __str__(self):
         return f"{self.nombre_completo} ({self.rut})"
-
-    class Meta:
-        verbose_name = "Ficha Madre"
-        verbose_name_plural = "Fichas Madres"
 
 
 class TamizajeMaterno(models.Model):
@@ -57,6 +53,9 @@ class TamizajeMaterno(models.Model):
 
     hepb_resultado = models.CharField(max_length=50)
     profilaxis_vhb_completa = models.BooleanField(default=False)
+
+    # 🟢 CAMPO AGREGADO: CHAGAS (Faltaba esto)
+    chagas_resultado = models.CharField(max_length=50, default='PENDIENTE', blank=True)
 
     def __str__(self):
         return f"Tamizaje de {self.madre.nombre_completo}"
@@ -93,4 +92,3 @@ class DefuncionMadre(models.Model):
 
     def __str__(self):
         return f"Defunción de {self.madre} - {self.fecha}"
-

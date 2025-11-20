@@ -1,57 +1,108 @@
 {% extends 'base.html' %}
 
+{% block title %}Reporte de Defunciones{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
 
-<h2 class="mb-4">Reporte de Defunciones</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Reporte de Defunciones</h2>
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir Pantalla
+        </button>
+    </div>
 
-<h4>Madres Fallecidas</h4>
-<table class="table table-hover mb-5">
-  <thead>
-    <tr>
-      <th>Fecha</th>
-      <th>Madre</th>
-      <th>Razón</th>
-      <th>Registrado por</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for d in madres %}
-    <tr>
-      <td>{{ d.fecha|date:"d/m/Y H:i" }}</td>
-      <td>{{ d.madre }}</td>
-      <td>{{ d.razon }}</td>
-      <td>{{ d.usuario_registra }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4" class="text-muted">Sin registros.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-person-x me-2"></i>Madres Fallecidas</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Madre</th>
+                        <th>Razón</th>
+                        <th>Registrado por</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in madres %}
+                    <tr>
+                        <td class="text-nowrap">{{ d.fecha|date:"d/m/Y H:i" }}</td>
+                        <td class="fw-bold">{{ d.madre.nombre_completo }}</td>
+                        <td>
+                            <span class="text-muted fst-italic">{{ d.razon|truncatechars:60 }}</span>
+                        </td>
+                        
+                        <td>
+                            {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username|default:"Sistema" }}
+                        </td>
+                        
+                        <td class="text-end">
+                            <a href="{% url 'madre:madre_defuncion_pdf' pk=d.madre.pk %}" 
+                               class="btn btn-sm btn-danger" 
+                               target="_blank"
+                               title="Descargar Certificado PDF">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            Sin registros de defunciones maternas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<h4>Recién Nacidos Fallecidos</h4>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>Fecha</th>
-      <th>RN</th>
-      <th>Razón</th>
-      <th>Registrado por</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for d in rn %}
-    <tr>
-      <td>{{ d.fecha|date:"d/m/Y H:i" }}</td>
-      <td>{{ d.rn }}</td>
-      <td>{{ d.razon }}</td>
-      <td>{{ d.usuario_registra }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4" class="text-muted">Sin registros.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-bandaid me-2"></i>Recién Nacidos Fallecidos</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>RN</th>
+                        <th>Razón</th>
+                        <th>Registrado por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in rn %}
+                    <tr>
+                        <td class="text-nowrap">{{ d.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if d.rn.parto.madre %}
+                                RN de {{ d.rn.parto.madre.nombre_completo }}
+                            {% else %}
+                                RN ID: {{ d.rn.id }}
+                            {% endif %}
+                        </td>
+                        <td><span class="text-muted fst-italic">{{ d.razon|truncatechars:50 }}</span></td>
+                        
+                        <td>
+                            {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username|default:"Sistema" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">
+                            Sin registros de defunciones de RN.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 </div>
 {% endblock %}

@@ -1,11 +1,7 @@
-# madre/forms.py
 from django import forms
-from .models import Madre, TamizajeMaterno, MadreObservacion
+from .models import Madre, TamizajeMaterno, MadreObservacion, DefuncionMadre
 from catalogo.models import Catalogo
 import re
-from .models import DefuncionMadre
-
-
 
 class MadreForm(forms.ModelForm):
     """
@@ -63,24 +59,67 @@ class MadreForm(forms.ModelForm):
 
 
 class TamizajeMaternoForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        select_fields = ['vdrl_resultado', 'vih_resultado', 'hepb_resultado']
-        for field in select_fields:
-            if field in self.fields:
-                self.fields[field].widget.attrs.update({'class': 'form-select'})
-
-        check_fields = ['vdrl_tratamiento', 'profilaxis_vhb_completa']
-        for field in check_fields:
-            if field in self.fields:
-                self.fields[field].widget.attrs.update({'class': 'form-check-input'})
-
+    """
+    Formulario para los Tamizajes (REM A11).
+    Convierte los campos de texto en Selects usando el Catálogo.
+    """
     class Meta:
         model = TamizajeMaterno
         fields = [
-            'vdrl_resultado', 'vdrl_tratamiento', 'vih_resultado',
-            'hepb_resultado', 'profilaxis_vhb_completa',
+            'vih_resultado', 
+            'vdrl_resultado', 'vdrl_tratamiento',
+            'hepb_resultado', 
+            'chagas_resultado', 
+            'profilaxis_vhb_completa'
         ]
+        labels = {
+            'vih_resultado': 'Resultado VIH',
+            'vdrl_resultado': 'Resultado VDRL (Sífilis)',
+            'vdrl_tratamiento': '¿Recibió Tratamiento VDRL?',
+            'hepb_resultado': 'Resultado Hepatitis B',
+            'chagas_resultado': 'Resultado Chagas',
+            'profilaxis_vhb_completa': 'Profilaxis VHB Completa (Madre)',
+        }
+        widgets = {
+            'vdrl_tratamiento': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'profilaxis_vhb_completa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. Obtener las opciones desde el Catálogo (VAL_RESULTADO_TAMIZAJE)
+        # Buscamos los valores: Negativo, Positivo, Indeterminado, Pendiente
+        try:
+            opciones_query = Catalogo.objects.filter(
+                tipo='VAL_RESULTADO_TAMIZAJE', 
+                activo=True
+            ).order_by('orden')
+            
+            # Creamos una lista de tuplas [('Valor', 'Valor'), ...]
+            # Usamos upper() en el valor guardado para que coincida con el reporte (POSITIVO)
+            choices = [('', '-- Seleccione --')] # Opción vacía inicial
+            for op in opciones_query:
+                # Guardamos en MAYÚSCULAS (op.valor.upper()) para que el reporte REM lo cuente bien
+                choices.append((op.valor.upper(), op.valor))
+                
+        except Exception:
+            # Fallback por si no se ha corrido la migración de catálogos
+            choices = [
+                ('', '-- Error: Cargue Catálogos --'),
+                ('POSITIVO', 'Positivo'),
+                ('NEGATIVO', 'Negativo')
+            ]
+
+        # 2. Asignar estas opciones a los widgets de los campos de texto
+        campos_con_select = ['vih_resultado', 'vdrl_resultado', 'hepb_resultado', 'chagas_resultado']
+        
+        for campo in campos_con_select:
+            if campo in self.fields:
+                self.fields[campo].widget = forms.Select(
+                    choices=choices,
+                    attrs={'class': 'form-select'}
+                )
 
 
 class MadreObservacionForm(forms.ModelForm):
