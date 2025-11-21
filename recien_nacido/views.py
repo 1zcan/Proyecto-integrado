@@ -9,18 +9,24 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 import io
 
+# Librería PDF
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 
+# Importaciones del proyecto
 from usuarios.decorators import role_required
 from .models import RecienNacido, ProfiRN, RNObservacion, DefuncionRN
 from .forms import RNForm, ProfiRNForm, RNObservacionForm, RNDeleteForm, DefuncionRNForm
+from parto.models import Parto
 from auditoria.models import LogAccion
+from auditoria.utils import registrar_log   # 🟢 helper central
 from auditoria.signals import get_client_ip
 
 
-# 1. LISTA GENERAL
+# ================================================
+#  1. LISTA GENERAL DE RECIÉN NACIDOS
+# ================================================
 @method_decorator(
     role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -32,6 +38,7 @@ class RNListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
+        # Solo RN activos (sin defunciones)
         return (
             super()
             .get_queryset()
@@ -42,6 +49,7 @@ class RNListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Contador para el botón de "Validar Altas"
         context['recien_nacidos_pendientes_count'] = (
             RecienNacido.objects
             .filter(fecha_alta__isnull=True, defunciones__isnull=True)
@@ -51,7 +59,9 @@ class RNListView(LoginRequiredMixin, ListView):
         return context
 
 
-# 2. LISTA PENDIENTES ALTA
+# ================================================
+#  2. LISTA DE PENDIENTES DE ALTA
+# ================================================
 @method_decorator(
     role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -74,7 +84,9 @@ class RNAltaPendienteListView(LoginRequiredMixin, ListView):
         return context
 
 
-# 3. CREAR RN
+# ================================================
+#  3. CREAR RECIÉN NACIDO
+# ================================================
 @method_decorator(
     role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -93,11 +105,26 @@ class RNCreateView(LoginRequiredMixin, CreateView):
         return reverse('recien_nacido:rn_lista')
 
     def form_valid(self, form):
+        """
+        Guardado explícito + log de creación.
+        """
         rn = form.save(commit=False)
+
         if hasattr(rn, "creado_por"):
             rn.creado_por = self.request.user
+
         rn.save()
         form.save_m2m()
+
+        # 🟢 REGISTRO DE AUDITORÍA - CREACIÓN RN
+        registrar_log(
+            self.request,
+            LogAccion.ACCION_CREATE,
+            "RecienNacido",
+            rn.pk,
+            "RN creado desde el formulario de creación.",
+        )
+
         messages.success(self.request, "Recién nacido creado correctamente.")
         return redirect(self.get_success_url())
 
@@ -107,7 +134,9 @@ class RNCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-# 4. EDITAR RN
+# ================================================
+#  4. EDITAR RECIÉN NACIDO
+# ================================================
 @method_decorator(
     role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -127,25 +156,48 @@ class RNUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Para que el template sepa que es edición
         context['is_creating'] = False
         return context
 
     def form_valid(self, form):
+        """
+        Guarda siempre los cambios del RN y registra el log.
+        """
         rn = form.save(commit=False)
+
+        # Si tienes campo 'modificado_por', se llena aquí
         if hasattr(rn, "modificado_por"):
             rn.modificado_por = self.request.user
+
         rn.save()
         form.save_m2m()
+
+        # 🟡 REGISTRO DE AUDITORÍA - UPDATE RN
+        registrar_log(
+            self.request,
+            LogAccion.ACCION_UPDATE,
+            "RecienNacido",
+            rn.pk,
+            "Datos del RN actualizados desde el formulario de edición.",
+        )
+
         messages.success(self.request, "Datos del recién nacido actualizados correctamente.")
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):
-        print("ERRORES RNUpdateView:", form.errors)
+        """
+        Si el formulario es inválido, mostramos un mensaje y
+        dejamos que el template pinte los errores.
+        """
+        print("ERRORES RNUpdateView:", form.errors)  # logs en consola
+
         messages.error(
             self.request,
             "Hay errores en el formulario. Revisa los campos marcados en rojo."
         )
         return super().form_invalid(form)
+
 
 # ================================================
 #  5. VALIDAR ALTA (Detalle)
@@ -206,6 +258,16 @@ class RNValidarAltaView(LoginRequiredMixin, DetailView):
 
             rn.fecha_alta = timezone.now()
             rn.save()
+
+            # 🔵 Log de validación de alta
+            registrar_log(
+                request,
+                LogAccion.ACCION_UPDATE,
+                "RecienNacido",
+                rn.pk,
+                "Alta de RN validada.",
+            )
+
             messages.success(request, "Alta validada correctamente.")
             return redirect('recien_nacido:rn_pendientes_alta')
 
@@ -244,6 +306,16 @@ class RNProfilaxisView(LoginRequiredMixin, DetailView):
             prof.rn = self.object
             prof.registrado_por = request.user
             prof.save()
+
+            # 🔵 Log de profilaxis
+            registrar_log(
+                request,
+                LogAccion.ACCION_CREATE,
+                "ProfiRN",
+                prof.pk,
+                f"Profilaxis registrada para RN ID {self.object.pk}.",
+            )
+
             return redirect(request.path_info)
 
         context = self.get_context_data()
@@ -279,6 +351,15 @@ class RNObservacionesView(LoginRequiredMixin, DetailView):
             obs.rn = self.object
             obs.autor = request.user
             obs.save()
+
+            registrar_log(
+                request,
+                LogAccion.ACCION_CREATE,
+                "RNObservacion",
+                obs.pk,
+                f"Observación registrada para RN ID {self.object.pk}.",
+            )
+
             return redirect(request.path_info)
 
         context = self.get_context_data()
@@ -299,6 +380,7 @@ class RNDeleteView(LoginRequiredMixin, View):
     def get(self, request, pk):
         rn = get_object_or_404(RecienNacido, pk=pk)
         form = RNDeleteForm(user=request.user)
+        hijos = None  # si luego quieres mostrar algo más
         return render(request, self.template_name, {"rn": rn, "form": form})
 
     def post(self, request, pk):
@@ -309,14 +391,14 @@ class RNDeleteView(LoginRequiredMixin, View):
             return render(request, self.template_name, {"rn": rn, "form": form})
 
         razon = form.cleaned_data["razon"]
-        detalle = f"Eliminación de RN ID={rn.id}. Motivo: {razon}."
-        LogAccion.objects.create(
-            usuario=request.user,
-            accion=LogAccion.ACCION_DELETE,
-            modelo="RecienNacido",
-            objeto_id=str(rn.pk),
-            detalle=detalle,
-            ip_address=get_client_ip()
+
+        # 🔴 Log eliminación
+        registrar_log(
+            request,
+            LogAccion.ACCION_DELETE,
+            "RecienNacido",
+            rn.pk,
+            f"Eliminación de RN. Motivo: {razon}",
         )
 
         rn.delete()
@@ -346,14 +428,12 @@ class RegistrarDefuncionRNView(LoginRequiredMixin, View):
                 registro.save()
 
                 # Auditoría
-                detalle = f"Defunción RN ID={rn.id}. Razón: {registro.razon}."
-                LogAccion.objects.create(
-                    usuario=request.user,
-                    accion=LogAccion.ACCION_UPDATE,
-                    modelo="RecienNacido",
-                    objeto_id=str(rn.pk),
-                    detalle=detalle,
-                    ip_address=get_client_ip(),
+                registrar_log(
+                    request,
+                    LogAccion.ACCION_UPDATE,
+                    "RecienNacido",
+                    rn.pk,
+                    f"Defunción RN registrada. Razón: {registro.razon}",
                 )
 
                 messages.success(

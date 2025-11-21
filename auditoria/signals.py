@@ -10,22 +10,25 @@ from .middleware import get_current_request
 User = get_user_model()
 
 
-def get_client_ip():
+def get_client_ip(request=None):
     """
-    Intenta obtener la IP real del cliente detrás del proxy de PythonAnywhere.
+    Uso:
+      - Desde vistas: get_client_ip(request)  → retorna IP real.
+      - Desde signals (sin request): get_client_ip() → retorna None.
+    Así evitamos errores de tipo y no rompemos auditar_post_save.
     """
-    request = get_current_request()
-    if not request:
-        return None
+    if request is None:
+        return None  # para las signals que la llaman sin parámetros
 
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        # Puede venir como "ip1, ip2, ip3"
+        # Si viene en X-Forwarded-For (proxies / PythonAnywhere), tomamos la primera IP
         ip = x_forwarded_for.split(",")[0].strip()
-    else:
-        ip = request.META.get("REMOTE_ADDR")
+        return ip
 
-    return ip
+    return request.META.get("REMOTE_ADDR")
+
+
 
 
 def get_current_user():

@@ -62,7 +62,6 @@
                     <th>Acción</th>
                     <th>Modelo</th>
                     <th>ID objeto</th>
-                    <th>IP</th>
                     <th style="width: 260px;">Detalle / Motivo</th>
                     <th></th>
                 </tr>
@@ -72,7 +71,15 @@
                 <!-- Fila principal -->
                 <tr>
                     <td class="text-nowrap">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
-                    <td>{{ log.usuario|default:"-" }}</td>
+
+                    <!-- USUARIO: nombre completo, username o 'Sistema' -->
+                    <td>
+                        {% if log.usuario %}
+                            {{ log.usuario.get_full_name|default:log.usuario.username }}
+                        {% else %}
+                            Sistema
+                        {% endif %}
+                    </td>
                     
                     <td>
                         {% if log.accion == 'create' %}
@@ -90,7 +97,7 @@
                     
                     <td>{{ log.modelo }}</td>
                     <td>{{ log.objeto_id }}</td>
-                    <td class="text-nowrap">{{ log.ip_address|default:"-" }}</td>
+
 
                     <!-- Resumen del detalle, con "..." -->
                     <td>
