@@ -19,6 +19,12 @@
             Fecha de nacimiento: {{ madre.fecha_nacimiento|date:"d-m-Y" }}
           </p>
 
+          <div class="alert alert-danger">
+            <i class="bi bi-shield-lock-fill me-2"></i>
+            Por seguridad de la historia clínica, el sistema <strong>no permitirá eliminar</strong> a esta madre
+            si tiene partos registrados asociados. En ese caso se mostrará un mensaje y no se realizará la eliminación.
+          </div>
+
           {% if total_hijos > 0 %}
           <div class="alert alert-warning">
             <i class="bi bi-info-circle-fill me-2"></i>

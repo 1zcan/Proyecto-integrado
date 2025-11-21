@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 import io
 
+from django.db.models.deletion import ProtectedError  # 👈 IMPORTANTE
+
 # Librería ReportLab para generar PDF
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -237,40 +239,65 @@ class MadreDeleteView(LoginRequiredMixin, View):
         total_hijos = hijos.count()
         form = MadreDeleteForm(request.POST, user=request.user)
 
-        if form.is_valid():
-            razon = form.cleaned_data["razon"]
-
-            # Borramos hijos (RN) primero si corresponde
-            hijos_ids = list(hijos.values_list("pk", flat=True))
-            hijos.delete()
-
-            # Log general de eliminación de madre
-            registrar_log(
+        if not form.is_valid():
+            # Formulario inválido, volvemos a mostrar la pantalla
+            return render(
                 request,
-                LogAccion.ACCION_DELETE,
-                "Madre",
-                madre.pk,
-                f"Madre eliminada. RUT={madre.rut}. Motivo: {razon}. "
-                f"Se eliminaron {total_hijos} RN asociados: IDs={hijos_ids}.",
+                self.template_name,
+                {"madre": madre, "hijos": hijos, "total_hijos": total_hijos, "form": form},
             )
 
-            madre.delete()
+        # ✅ Si el formulario es válido:
+        razon = form.cleaned_data["razon"]
 
-            messages.success(request, "Madre eliminada correctamente.")
+        # ⚠️ Primero verificamos si tiene partos asociados (FK PROTECT en Parto.madre)
+        if madre.partos.exists():
+            messages.error(
+                request,
+                "No se puede eliminar esta madre porque tiene partos registrados. "
+                "Para proteger la historia clínica, primero revise esos registros."
+            )
             return redirect("madre:madre_lista")
 
-        return render(
+        # Si no tiene partos, entonces podemos continuar
+        hijos_ids = list(hijos.values_list("pk", flat=True))
+        total_hijos_eliminados = len(hijos_ids)
+
+        try:
+            # Eliminamos RN asociados
+            hijos.delete()
+
+            madre_id = madre.pk
+            madre_rut = madre.rut
+
+            # Intentamos eliminar la madre
+            madre.delete()
+
+        except ProtectedError:
+            # Si por alguna otra relación protegida falla, mostramos mensaje y no reventamos
+            messages.error(
+                request,
+                "No se puede eliminar esta madre porque tiene registros asociados protegidos."
+            )
+            return redirect("madre:madre_lista")
+
+        # Log solo si REALMENTE se eliminó
+        registrar_log(
             request,
-            self.template_name,
-            {"madre": madre, "hijos": hijos, "total_hijos": total_hijos, "form": form},
+            LogAccion.ACCION_DELETE,
+            "Madre",
+            madre_id,
+            f"Madre eliminada. RUT={madre_rut}. Motivo: {razon}. "
+            f"Se eliminaron {total_hijos_eliminados} RN asociados: IDs={hijos_ids}.",
         )
+
+        messages.success(request, "Madre eliminada correctamente.")
+        return redirect("madre:madre_lista")
 
 
 # ================================================
 #  SECCIÓN DE DEFUNCIONES MADRE
 # ================================================
-
-# 1. REGISTRAR DEFUNCIÓN
 @method_decorator(
     role_required(['profesional_salud', 'ti_informatica']),
     name='dispatch'
@@ -313,7 +340,6 @@ class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
         return redirect("madre:madre_lista")
 
 
-# 2. LISTA DE MADRES FALLECIDAS
 @method_decorator(
     role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']),
     name='dispatch'
@@ -335,7 +361,6 @@ class MadreDefuncionesListView(ListView):
         )
 
 
-# 3. GENERAR PDF DEFUNCIÓN INDIVIDUAL
 @method_decorator(
     role_required(['profesional_salud', 'ti_informatica']),
     name='dispatch'
@@ -371,7 +396,6 @@ class MadreDefuncionPDFView(View):
         c.drawString(inch, y, f"RUT: {madre.rut}")
 
         y -= 0.25 * inch
-        # Corrección formato fecha (strftime)
         fecha_nac_fmt = madre.fecha_nacimiento.strftime('%d-%m-%Y')
         c.drawString(inch, y, f"Fecha Nacimiento: {fecha_nac_fmt}")
 
@@ -382,12 +406,10 @@ class MadreDefuncionPDFView(View):
         y -= 0.3 * inch
         c.setFont("Helvetica", 11)
 
-        # Corrección formato fecha hora
         fecha_def_fmt = defuncion.fecha.strftime('%d/%m/%Y %H:%M')
         c.drawString(inch, y, f"Fecha y Hora: {fecha_def_fmt}")
 
         y -= 0.25 * inch
-        # Lógica segura para mostrar usuario
         registrador = "Sistema"
         if defuncion.usuario_registra:
             registrador = (
@@ -403,7 +425,6 @@ class MadreDefuncionPDFView(View):
         y -= 0.25 * inch
         c.setFont("Helvetica", 11)
 
-        # Manejo de texto largo para la causa
         import textwrap
         text_object = c.beginText(inch, y)
         text_object.setFont("Helvetica", 11)

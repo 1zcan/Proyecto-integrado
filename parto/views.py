@@ -55,7 +55,7 @@ class PartoListView(ListView):
 
 
 # EDITAR PARTO
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class PartoCreateUpdateView(UpdateView):
     model = Parto
     form_class = PartoForm
@@ -64,7 +64,7 @@ class PartoCreateUpdateView(UpdateView):
 
 
 # CREAR PARTO DESDE FICHA DE MADRE (Opcional)
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class PartoCreateView(CreateView):
     model = Parto
     form_class = PartoForm
@@ -106,7 +106,7 @@ class PartoCreateView(CreateView):
 
 
 # MODELO DE ATENCIÓN
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class ModeloAtencionUpdateView(UpdateView):
     model = ModeloAtencionParto
     form_class = ModeloAtencionForm
@@ -129,7 +129,7 @@ class ModeloAtencionUpdateView(UpdateView):
 
 
 # ROBSON
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class RobsonUpdateView(UpdateView):
     model = RobsonParto
     form_class = RobsonForm
@@ -152,7 +152,7 @@ class RobsonUpdateView(UpdateView):
 
 
 # OBSERVACIONES / FIRMA
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(role_required(['profesional_salud', 'ti_informatica', 'tecnico_salud']), name='dispatch')
 class PartoObservacionesView(LoginRequiredMixin, CreateView):
     model = PartoObservacion
     form_class = PartoObservacionForm
