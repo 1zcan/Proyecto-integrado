@@ -4,15 +4,45 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import send_mail  # ya no lo usamos, pero lo puedes quitar si quieres
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+
 import random
+import sendgrid
+from sendgrid.helpers.mail import Mail
+from socket import error as socket_error
 
 from .models import Perfil, TwoFactorCode
 from .forms import RegistroForm, PerfilForm, FotoPerfilForm, AdminUserCreateForm
+
+
+# -------------------------------------------------------------------
+# FUNCIONES AUXILIARES PARA ENVÍO DE CORREO CON SENDGRID
+# -------------------------------------------------------------------
+def enviar_correo(destinatario, asunto, contenido_texto):
+    """
+    Envía un correo usando la API de SendGrid.
+    No lanza excepción hacia arriba: si falla, devuelve False.
+    """
+    sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
+    message = Mail(
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to_emails=destinatario,
+        subject=asunto,
+        plain_text_content=contenido_texto,
+    )
+    try:
+        response = sg.send(message)
+        # print(response.status_code)  # opcional para debug
+        return True
+    except (socket_error, Exception) as e:
+        # Muy importante: NO botar la vista si falla el envío
+        print(f"[ENVIAR_CORREO] Error enviando correo a {destinatario}: {e}")
+        return False
 
 
 # -------------------------------------------------------------------
@@ -30,10 +60,12 @@ def registro(request):
             user.is_active = False
             user.save()
             
+            # Asignar rol por defecto
             if hasattr(user, 'perfil'):
                 user.perfil.rol = 'usuario'
                 user.perfil.save()
 
+            # Generar enlace de activación
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
 
@@ -41,21 +73,27 @@ def registro(request):
                 reverse('usuarios:activar_cuenta', kwargs={'uidb64': uid, 'token': token})
             )
 
-            send_mail(
-                subject='Activa tu cuenta',
-                message=(
-                    f'Hola {user.username},\n\n'
-                    f'Activa tu cuenta haciendo clic en el siguiente enlace:\n{link_activacion}\n\n'
-                    'Si no creaste esta cuenta, puedes ignorar este mensaje.'
-                ),
-                from_email=None,
-                recipient_list=[user.email],
+            asunto = 'Activa tu cuenta'
+            cuerpo = (
+                f'Hola {user.username},\n\n'
+                f'Activa tu cuenta haciendo clic en el siguiente enlace:\n{link_activacion}\n\n'
+                'Si no creaste esta cuenta, puedes ignorar este mensaje.'
             )
 
-            messages.success(
-                request,
-                'Registro exitoso. Te enviamos un enlace de activación a tu correo.'
-            )
+            enviado = enviar_correo(user.email, asunto, cuerpo)
+
+            if enviado:
+                messages.success(
+                    request,
+                    'Registro exitoso. Te enviamos un enlace de activación a tu correo.'
+                )
+            else:
+                messages.warning(
+                    request,
+                    'Tu cuenta se registró, pero hubo un problema al enviar el correo de activación. '
+                    'Contacta al administrador si el problema persiste.'
+                )
+
             return redirect('usuarios:login')
     else:
         form = RegistroForm()
@@ -116,16 +154,24 @@ def login_view(request):
             code = f"{random.randint(0, 999999):06d}"
             TwoFactorCode.objects.create(user=usuario, code=code)
 
+            # Guardar user_id en sesión para la segunda etapa
             request.session['2fa_user_id'] = usuario.id
 
-            send_mail(
-                subject='Tu código de verificación',
-                message=f'Tu código de verificación es: {code}',
-                from_email=None,
-                recipient_list=[usuario.email],
-            )
+            # Enviar código por correo usando SendGrid
+            asunto = 'Tu código de verificación'
+            cuerpo = f'Tu código de verificación es: {code}'
 
-            messages.info(request, 'Te enviamos un código de verificación a tu correo.')
+            enviado = enviar_correo(usuario.email, asunto, cuerpo)
+
+            if enviado:
+                messages.info(request, 'Te enviamos un código de verificación a tu correo.')
+            else:
+                messages.warning(
+                    request,
+                    'No se pudo enviar el correo con el código de verificación. '
+                    'Contacta al administrador si el problema persiste.'
+                )
+
             return redirect('usuarios:login_2fa')
 
         else:

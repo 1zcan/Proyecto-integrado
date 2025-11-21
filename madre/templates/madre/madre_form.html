@@ -14,7 +14,6 @@
             {% endif %}
         </p>
     </div>
-    {# ANTES: 'madre_lista' sin namespace #}
     <a href="{% url 'madre:madre_lista' %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Volver al Listado de Madres
     </a>
@@ -92,15 +91,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const rutInput = document.getElementById("id_rut");
     if (!rutInput) return;
 
-    rutInput.setAttribute("pattern", "^[0-9]{1,8}-[0-9Kk]{1}$");
+    // 🔹 EXACTO: 8 dígitos, guion y dígito o K
+    rutInput.setAttribute("pattern", "^[0-9]{8}-[0-9Kk]{1}$");
     rutInput.setAttribute("title", "Formato válido: 12345678-9 o 12345678-K");
     rutInput.setAttribute("maxlength", "10");
     rutInput.setAttribute("placeholder", "12345678-9");
 
     rutInput.addEventListener("input", function () {
         let v = this.value;
+
+        // Dejar solo números, k/K y guion
         v = v.replace(/[^0-9kK\-]/g, "");
+
+        // Evitar más de un guion
         v = v.replace(/(\-.*)\-/g, "$1");
+
         this.value = v;
     });
 });

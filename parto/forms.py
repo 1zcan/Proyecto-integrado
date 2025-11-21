@@ -91,6 +91,13 @@ class RobsonForm(forms.ModelForm):
 
 
 class PartoObservacionForm(forms.ModelForm):
+    class Meta:
+        model = PartoObservacion
+        fields = ['observacion', 'password_firma']  # o los campos que tengas
+    def __init__(self, *args, **kwargs):
+        # Sacamos el user del kwargs para que no llegue al ModelForm padre
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
     """
     Formulario para añadir observaciones firmadas [cite: 42, 216]
     """
@@ -99,3 +106,7 @@ class PartoObservacionForm(forms.ModelForm):
     class Meta:
         model = PartoObservacion
         fields = ['texto']  # 'autor' y 'parto' se asignan en la vista
+    def __init__(self, *args, **kwargs):
+        # Saco el usuario de los kwargs, si viene
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)

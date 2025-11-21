@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 import io
+import re  # 👈 para trabajar con el RUT
 
 # Librería ReportLab para generar PDF
 from reportlab.pdfgen import canvas
@@ -16,17 +17,42 @@ from reportlab.lib.units import inch
 # Importaciones del proyecto
 from usuarios.decorators import role_required
 from .models import Madre, TamizajeMaterno, MadreObservacion
-from .forms import MadreForm, TamizajeMaternoForm, MadreObservacionForm, MadreDeleteForm, DefuncionMadreForm
+from .forms import (
+    MadreForm,
+    TamizajeMaternoForm,
+    MadreObservacionForm,
+    MadreDeleteForm,
+    DefuncionMadreForm,
+)
 from recien_nacido.models import RecienNacido
 from auditoria.models import LogAccion
 from auditoria.signals import get_client_ip
+
+
+# =========================================================
+#  FUNCIÓN AUXILIAR PARA NORMALIZAR RUT
+# =========================================================
+def normalizar_rut(rut_raw: str) -> str:
+    """
+    Quita puntos y espacios, pasa a mayúsculas.
+    Ej: '12.345.678-k ' -> '12345678-K'
+    """
+    if not rut_raw:
+        return ""
+    rut = rut_raw.replace(".", "").replace(" ", "").upper()
+    return rut
 
 
 # ================================================
 #  VISTAS ESTÁNDAR (Gestión de Madres Activas)
 # ================================================
 
-@method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(
+    role_required(
+        ["administrativo", "profesional_salud", "tecnico_salud", "ti_informatica"]
+    ),
+    name="dispatch",
+)
 class MadreListView(ListView):
     model = Madre
     template_name = "madre/madre_lista.html"
@@ -35,15 +61,27 @@ class MadreListView(ListView):
 
     def get_queryset(self):
         # Solo madres activas (que NO tienen registro de defunción)
-        qs = Madre.objects.select_related("comuna", "cesfam").filter(activo=True, defunciones__isnull=True).distinct()
-        
+        qs = (
+            Madre.objects.select_related("comuna", "cesfam")
+            .filter(activo=True, defunciones__isnull=True)
+            .distinct()
+        )
+
         # Filtros
-        rut = self.request.GET.get("rut")
+        rut = self.request.GET.get("rut", "").strip()
         comuna = self.request.GET.get("comuna")
         cesfam = self.request.GET.get("cesfam")
 
         if rut:
-            qs = qs.filter(rut__icontains=rut)
+            rut_normalizado = normalizar_rut(rut)
+            # Validamos formato estándar: 8 dígitos + guion + dígito/K
+            if re.match(r"^[0-9]{8}-[0-9K]$", rut_normalizado):
+                qs = qs.filter(rut__iexact=rut_normalizado)
+            else:
+                # Si el formato no es válido, no filtramos pero el template
+                # puede mostrar el mensaje si quieres (opcional)
+                qs = qs.none()
+
         if comuna:
             qs = qs.filter(comuna_id=comuna)
         if cesfam:
@@ -53,68 +91,110 @@ class MadreListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from catalogo.models import Catalogo
-        context["comunas"] = Catalogo.objects.filter(tipo="VAL_COMUNA", activo=True).order_by("valor")
-        context["cesfams"] = Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True).order_by("valor")
+
+        context["comunas"] = (
+            Catalogo.objects.filter(tipo="VAL_COMUNA", activo=True)
+            .order_by("valor")
+        )
+        context["cesfams"] = (
+            Catalogo.objects.filter(tipo="VAL_ESTABLECIMIENTO", activo=True)
+            .order_by("valor")
+        )
         context["selected_comuna"] = self.request.GET.get("comuna", "")
         context["selected_cesfam"] = self.request.GET.get("cesfam", "")
+        context["rut_busqueda"] = self.request.GET.get("rut", "")
         return context
 
-@method_decorator(role_required(['administrativo', 'profesional_salud', 'ti_informatica']), name='dispatch')
+
+@method_decorator(
+    role_required(["administrativo", "profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class MadreCreateView(CreateView):
     model = Madre
     form_class = MadreForm
     template_name = "madre/madre_form.html"
-    success_url = reverse_lazy('madre:madre_lista')
+    success_url = reverse_lazy("madre:madre_lista")
 
-@method_decorator(role_required(['administrativo', 'profesional_salud', 'ti_informatica']), name='dispatch')
+
+@method_decorator(
+    role_required(["administrativo", "profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class MadreUpdateView(UpdateView):
     model = Madre
     form_class = MadreForm
     template_name = "madre/madre_form.html"
-    success_url = reverse_lazy('madre:madre_lista')
+    success_url = reverse_lazy("madre:madre_lista")
 
-@method_decorator(role_required(['profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
+
+@method_decorator(
+    role_required(["profesional_salud", "tecnico_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class TamizajeCreateUpdateView(UpdateView):
     model = TamizajeMaterno
     form_class = TamizajeMaternoForm
     template_name = "madre/madre_tamizajes.html"
+
     def get_object(self, queryset=None):
-        madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
+        madre = Madre.objects.get(pk=self.kwargs["madre_pk"])
         obj, created = TamizajeMaterno.objects.get_or_create(madre=madre)
         return obj
-    def get_success_url(self):
-        return reverse_lazy('madre:madre_lista')
 
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+    def get_success_url(self):
+        return reverse_lazy("madre:madre_lista")
+
+
+@method_decorator(
+    role_required(["profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class MadreObservacionesView(LoginRequiredMixin, CreateView):
     model = MadreObservacion
     form_class = MadreObservacionForm
     template_name = "madre/madre_observaciones.html"
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
+        kwargs["user"] = self.request.user
         return kwargs
+
     def form_valid(self, form):
         form.instance.autor = self.request.user
-        form.instance.madre = Madre.objects.get(pk=self.kwargs['madre_pk'])
+        form.instance.madre = Madre.objects.get(pk=self.kwargs["madre_pk"])
         form.instance.firma_simple = True
         return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['madre'] = Madre.objects.get(pk=self.kwargs['madre_pk'])
-        context['observaciones'] = context['madre'].observaciones.all()
+        madre = Madre.objects.get(pk=self.kwargs["madre_pk"])
+        context["madre"] = madre
+        context["observaciones"] = madre.observaciones.all()
         return context
-    def get_success_url(self):
-        return reverse_lazy('madre:madre_observaciones', kwargs={'madre_pk': self.kwargs['madre_pk']})
 
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+    def get_success_url(self):
+        return reverse_lazy(
+            "madre:madre_observaciones",
+            kwargs={"madre_pk": self.kwargs["madre_pk"]},
+        )
+
+
+@method_decorator(
+    role_required(["profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class MadreDeleteView(LoginRequiredMixin, View):
     template_name = "madre/madre_confirm_delete.html"
+
     def get(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         hijos = RecienNacido.objects.filter(parto__madre=madre)
         form = MadreDeleteForm(user=request.user)
-        return render(request, self.template_name, {"madre": madre, "hijos": hijos, "form": form})
+        return render(
+            request, self.template_name, {"madre": madre, "hijos": hijos, "form": form}
+        )
+
     def post(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         form = MadreDeleteForm(request.POST, user=request.user)
@@ -128,8 +208,8 @@ class MadreDeleteView(LoginRequiredMixin, View):
                 detalle=f"Eliminación Madre RUT={madre.rut}. Razón: {razon}",
                 ip_address=get_client_ip(),
             )
-            madre.partos.all().delete() # Borrar partos asociados
-            madre.delete() # Borrado físico o lógico según modelo
+            madre.partos.all().delete()  # Borrar partos asociados
+            madre.delete()  # Borrado físico o lógico según modelo
             messages.success(request, "Madre eliminada correctamente.")
             return redirect("madre:madre_lista")
         return render(request, self.template_name, {"madre": madre, "form": form})
@@ -140,30 +220,30 @@ class MadreDeleteView(LoginRequiredMixin, View):
 # ================================================
 
 # 1. REGISTRAR DEFUNCIÓN (Acción del Modal)
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(
+    role_required(["profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
     def post(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk, activo=True)
         password = request.POST.get("password_confirm")
-        
+
         # Validar Contraseña para firma simple
         user = authenticate(request, username=request.user.username, password=password)
-        
+
         if user:
             form = DefuncionMadreForm(request.POST)
             if form.is_valid():
                 registro = form.save(commit=False)
                 registro.madre = madre
-                
-                # 🟢 AQUÍ SE GUARDA EL USUARIO (CORRECCIÓN APLICADA)
-                registro.usuario_registra = request.user 
-                
+                registro.usuario_registra = request.user
                 registro.save()
-                
+
                 # Marcar madre como fallecida (inactiva)
-                madre.activo = False 
+                madre.activo = False
                 madre.save()
-                
+
                 LogAccion.objects.create(
                     usuario=request.user,
                     accion=LogAccion.ACCION_UPDATE,
@@ -172,18 +252,23 @@ class RegistrarDefuncionMadreView(LoginRequiredMixin, View):
                     detalle=f"Defunción registrada. Razón: {registro.razon}",
                     ip_address=get_client_ip(),
                 )
-                
+
                 messages.success(request, "Defunción registrada correctamente.")
             else:
                 messages.error(request, "Error en el formulario.")
         else:
             messages.error(request, "Contraseña incorrecta.")
-            
+
         return redirect("madre:madre_lista")
 
 
 # 2. LISTA DE MADRES FALLECIDAS
-@method_decorator(role_required(['administrativo', 'profesional_salud', 'tecnico_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(
+    role_required(
+        ["administrativo", "profesional_salud", "tecnico_salud", "ti_informatica"]
+    ),
+    name="dispatch",
+)
 class MadreDefuncionesListView(ListView):
     model = Madre
     template_name = "madre/madre_defunciones_lista.html"
@@ -193,15 +278,18 @@ class MadreDefuncionesListView(ListView):
     def get_queryset(self):
         # Filtra madres inactivas que tienen un registro de defunción
         return (
-            Madre.objects
-            .select_related("comuna", "cesfam")
+            Madre.objects.select_related("comuna", "cesfam")
             .filter(activo=False, defunciones__isnull=False)
             .distinct()
-            .order_by('-defunciones__fecha')
+            .order_by("-defunciones__fecha")
         )
 
+
 # 3. GENERAR PDF DEFUNCIÓN INDIVIDUAL
-@method_decorator(role_required(['profesional_salud', 'ti_informatica']), name='dispatch')
+@method_decorator(
+    role_required(["profesional_salud", "ti_informatica"]),
+    name="dispatch",
+)
 class MadreDefuncionPDFView(View):
     def get(self, request, pk):
         madre = get_object_or_404(Madre, pk=pk)
@@ -209,61 +297,65 @@ class MadreDefuncionPDFView(View):
 
         if not defuncion:
             messages.error(request, "No se encontró registro de defunción.")
-            return redirect('madre:madre_defunciones_lista')
+            return redirect("madre:madre_defunciones_lista")
 
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
-        
+
         # Encabezado
         c.setFont("Helvetica-Bold", 16)
         c.drawString(inch, height - inch, "Certificado de Defunción Materna")
         c.setFont("Helvetica", 10)
-        c.drawString(inch, height - 1.2*inch, "Hosp. Clínico Herminda Martín - Registro Interno")
-        c.line(inch, height - 1.4*inch, width - inch, height - 1.4*inch)
+        c.drawString(
+            inch,
+            height - 1.2 * inch,
+            "Hosp. Clínico Herminda Martín - Registro Interno",
+        )
+        c.line(inch, height - 1.4 * inch, width - inch, height - 1.4 * inch)
 
         # Datos Paciente
-        y = height - 2*inch
+        y = height - 2 * inch
         c.setFont("Helvetica-Bold", 12)
         c.drawString(inch, y, "1. DATOS DE LA PACIENTE")
-        y -= 0.3*inch
+        y -= 0.3 * inch
         c.setFont("Helvetica", 11)
         c.drawString(inch, y, f"Nombre: {madre.nombre_completo}")
-        y -= 0.25*inch
+        y -= 0.25 * inch
         c.drawString(inch, y, f"RUT: {madre.rut}")
-        
-        y -= 0.25*inch
-        # Corrección formato fecha (strftime)
-        fecha_nac_fmt = madre.fecha_nacimiento.strftime('%d-%m-%Y')
-        c.drawString(inch, y, f"Fecha Nacimiento: {fecha_nac_fmt}")
+
+        y -= 0.25 * inch
+        if madre.fecha_nacimiento:
+            fecha_nac_fmt = madre.fecha_nacimiento.strftime("%d-%m-%Y")
+            c.drawString(inch, y, f"Fecha Nacimiento: {fecha_nac_fmt}")
 
         # Datos Defunción
-        y -= 0.6*inch
+        y -= 0.6 * inch
         c.setFont("Helvetica-Bold", 12)
         c.drawString(inch, y, "2. DETALLES DEL FALLECIMIENTO")
-        y -= 0.3*inch
+        y -= 0.3 * inch
         c.setFont("Helvetica", 11)
-        
-        # Corrección formato fecha hora
-        fecha_def_fmt = defuncion.fecha.strftime('%d/%m/%Y %H:%M')
+
+        fecha_def_fmt = defuncion.fecha.strftime("%d/%m/%Y %H:%M")
         c.drawString(inch, y, f"Fecha y Hora: {fecha_def_fmt}")
-        
-        y -= 0.25*inch
-        # Lógica segura para mostrar usuario
+
+        y -= 0.25 * inch
         registrador = "Sistema"
         if defuncion.usuario_registra:
-            registrador = defuncion.usuario_registra.get_full_name() or defuncion.usuario_registra.username
-            
+            registrador = (
+                defuncion.usuario_registra.get_full_name()
+                or defuncion.usuario_registra.username
+            )
         c.drawString(inch, y, f"Registrado por: {registrador}")
 
-        y -= 0.4*inch
+        y -= 0.4 * inch
         c.setFont("Helvetica-Bold", 11)
         c.drawString(inch, y, "Causa / Razón Clínica:")
-        y -= 0.25*inch
+        y -= 0.25 * inch
         c.setFont("Helvetica", 11)
-        
-        # Manejo de texto largo para la causa
+
         import textwrap
+
         text_object = c.beginText(inch, y)
         text_object.setFont("Helvetica", 11)
         lineas = textwrap.wrap(defuncion.razon, width=80)
@@ -273,8 +365,39 @@ class MadreDefuncionPDFView(View):
 
         c.showPage()
         c.save()
-        
+
         buffer.seek(0)
-        response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="Defuncion_{madre.rut}.pdf"'
+        response = HttpResponse(buffer, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="Defuncion_{madre.rut}.pdf"'
+        )
         return response
+
+
+# =========================================================
+#  BÚSQUEDA SIMPLE POR RUT (usa el mismo estándar 12345678-K)
+# =========================================================
+def buscar_madre(request):
+    rut_ingresado = request.GET.get("rut", "").strip()
+    madre = None
+    error = None
+
+    if rut_ingresado:
+        rut = normalizar_rut(rut_ingresado)
+
+        if not re.match(r"^[0-9]{8}-[0-9K]$", rut):
+            error = "El RUT debe tener el formato 12345678-9 o 12345678-K."
+        else:
+            madre = Madre.objects.filter(rut__iexact=rut).first()
+            if not madre:
+                error = "No se encontró ninguna madre con ese RUT."
+
+    return render(
+        request,
+        "madre/buscar_madre.html",
+        {
+            "madre": madre,
+            "error": error,
+            "rut_ingresado": rut_ingresado,
+        },
+    )

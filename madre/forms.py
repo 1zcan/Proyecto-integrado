@@ -3,6 +3,7 @@ from .models import Madre, TamizajeMaterno, MadreObservacion, DefuncionMadre
 from catalogo.models import Catalogo
 import re
 
+
 class MadreForm(forms.ModelForm):
     """
     Formulario para la ficha sociodemográfica y documentos.
@@ -22,10 +23,19 @@ class MadreForm(forms.ModelForm):
         self.fields['comuna'].empty_label = "Seleccione una comuna"
         self.fields['cesfam'].empty_label = "Seleccione un establecimiento"
 
-        # Estilos
+        # Estilos generales
         for name, field in self.fields.items():
             if isinstance(field.widget, (forms.TextInput, forms.Select, forms.FileInput)):
                 field.widget.attrs.update({'class': 'form-control'})
+
+        # 🔹 Configuración especial para el campo RUT
+        if 'rut' in self.fields:
+            self.fields['rut'].max_length = 10  # 8 dígitos + guion + dv
+            self.fields['rut'].widget.attrs.update({
+                'placeholder': 'Ej: 12345678-9',
+                'pattern': r'\d{8}-[\dkK]',
+                'title': 'Debe tener 8 números, guion y un dígito o K. Ej: 12345678-9',
+            })
 
         # Checkbox estilo switch
         check_fields = ['migrante', 'pueblo_originario', 'discapacidad']
@@ -48,13 +58,23 @@ class MadreForm(forms.ModelForm):
         ]
 
     def clean_rut(self):
+        """
+        Normaliza y valida el RUT en formato:
+        8 dígitos + '-' + dígito o K
+        Ej: 12345678-9  /  12345678-K
+        """
         rut = self.cleaned_data.get("rut", "").strip()
-        pattern = r"^[0-9]{1,8}-[0-9Kk]{1}$"
+
+        # Eliminar puntos si alguien los escribe (11.111.111-1 -> 11111111-1)
+        rut = rut.replace(".", "").upper()
+
+        pattern = r"^[0-9]{8}-[0-9K]{1}$"
 
         if not re.match(pattern, rut):
             raise forms.ValidationError(
                 "El RUT debe tener el formato 12345678-9 o 12345678-K"
             )
+
         return rut
 
 
@@ -66,10 +86,10 @@ class TamizajeMaternoForm(forms.ModelForm):
     class Meta:
         model = TamizajeMaterno
         fields = [
-            'vih_resultado', 
+            'vih_resultado',
             'vdrl_resultado', 'vdrl_tratamiento',
-            'hepb_resultado', 
-            'chagas_resultado', 
+            'hepb_resultado',
+            'chagas_resultado',
             'profilaxis_vhb_completa'
         ]
         labels = {
@@ -87,33 +107,26 @@ class TamizajeMaternoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # 1. Obtener las opciones desde el Catálogo (VAL_RESULTADO_TAMIZAJE)
-        # Buscamos los valores: Negativo, Positivo, Indeterminado, Pendiente
+
         try:
             opciones_query = Catalogo.objects.filter(
-                tipo='VAL_RESULTADO_TAMIZAJE', 
+                tipo='VAL_RESULTADO_TAMIZAJE',
                 activo=True
             ).order_by('orden')
-            
-            # Creamos una lista de tuplas [('Valor', 'Valor'), ...]
-            # Usamos upper() en el valor guardado para que coincida con el reporte (POSITIVO)
-            choices = [('', '-- Seleccione --')] # Opción vacía inicial
+
+            choices = [('', '-- Seleccione --')]
             for op in opciones_query:
-                # Guardamos en MAYÚSCULAS (op.valor.upper()) para que el reporte REM lo cuente bien
                 choices.append((op.valor.upper(), op.valor))
-                
+
         except Exception:
-            # Fallback por si no se ha corrido la migración de catálogos
             choices = [
                 ('', '-- Error: Cargue Catálogos --'),
                 ('POSITIVO', 'Positivo'),
                 ('NEGATIVO', 'Negativo')
             ]
 
-        # 2. Asignar estas opciones a los widgets de los campos de texto
         campos_con_select = ['vih_resultado', 'vdrl_resultado', 'hepb_resultado', 'chagas_resultado']
-        
+
         for campo in campos_con_select:
             if campo in self.fields:
                 self.fields[campo].widget = forms.Select(
@@ -155,11 +168,9 @@ class MadreObservacionForm(forms.ModelForm):
         if not clave:
             raise forms.ValidationError("Debe ingresar la clave para validar la observación.")
 
-        # Validar que haya un usuario autenticado
         if self.user is None or not self.user.is_authenticated:
             raise forms.ValidationError("Debe iniciar sesión para poder firmar la observación.")
 
-        # Comparar con la contraseña real del usuario logueado
         if not self.user.check_password(clave):
             raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
 
@@ -207,6 +218,7 @@ class MadreDeleteForm(forms.Form):
             raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
 
         return clave
+
 
 class DefuncionMadreForm(forms.ModelForm):
     class Meta:

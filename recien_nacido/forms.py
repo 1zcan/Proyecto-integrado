@@ -1,16 +1,18 @@
 # recien_nacido/forms.py
 from django import forms
-from .models import RecienNacido, ProfiRN, RNObservacion
+from .models import RecienNacido, ProfiRN, RNObservacion, DefuncionRN
 from parto.models import Parto
 from catalogo.models import Catalogo
-from .models import DefuncionRN
 
 
 class RNForm(forms.ModelForm):
     """
-    Formulario Unificado para Creación (selecciona Parto) y Edición.
+    Formulario unificado para CREAR y EDITAR RN.
+
+    - En CREAR: se muestra y exige seleccionar un Parto.
+    - En EDITAR: no se muestra el Parto, no se vuelve a pedir,
+      pero se mantiene el parto original del RN.
     """
-    # CAMPO PARTO: Incluido para la creación autónoma
     parto = forms.ModelChoiceField(
         queryset=Parto.objects.filter(activo=True).order_by('-fecha', '-hora'),
         label="Seleccionar Parto asociado",
@@ -47,10 +49,38 @@ class RNForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # viene desde las views
+        self.is_edit = kwargs.pop("is_edit", False)
         super().__init__(*args, **kwargs)
-        # Ocultar el campo 'parto' si estamos en edición
-        if self.instance.pk:
-            self.fields['parto'].widget = forms.HiddenInput()
+
+        # Si estamos editando, no queremos que el usuario cambie el parto ni que sea obligatorio
+        if self.is_edit:
+            if "parto" in self.fields:
+                self.fields["parto"].required = False
+                self.fields["parto"].widget = forms.HiddenInput()
+                # aseguramos que el initial sea el parto actual
+                if self.instance and self.instance.pk:
+                    self.initial["parto"] = self.instance.parto
+
+    def clean_parto(self):
+        """
+        - En CREAR: obliga a seleccionar un parto.
+        - En EDITAR: si no viene en el POST, reutiliza el parto del instance.
+        """
+        parto = self.cleaned_data.get("parto")
+
+        # Si es edición y no viene valor, usamos el que ya tenía el RN
+        if self.is_edit:
+            if not parto and self.instance and self.instance.pk:
+                return self.instance.parto
+            return parto
+
+        # Caso creación: debe venir sí o sí
+        if not parto:
+            raise forms.ValidationError(
+                "Seleccionar Parto asociado. Este campo es obligatorio."
+            )
+        return parto
 
     def clean_apgar_1(self):
         data = self.cleaned_data['apgar_1']
@@ -65,13 +95,9 @@ class RNForm(forms.ModelForm):
         return data
 
     def clean_pc(self):
-        """
-        Validación para Perímetro Craneano:
-        - No permite valores nulos negativos ni cero.
-        """
         pc = self.cleaned_data.get("pc")
         if pc is None:
-            return pc  # por si el campo es opcional en el modelo
+            return pc
         if pc <= 0:
             raise forms.ValidationError("El perímetro craneano debe ser mayor a 0 cm.")
         return pc
@@ -97,9 +123,13 @@ class ProfiRNForm(forms.ModelForm):
             'reaccion_adversa'
         ]
         widgets = {
-            'fecha_hora': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'fecha_hora': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'}
+            ),
             'profesional': forms.TextInput(attrs={'class': 'form-control'}),
-            'reaccion_adversa': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Describir si aplica...', 'class': 'form-control'}),
+            'reaccion_adversa': forms.Textarea(
+                attrs={'rows': 2, 'placeholder': 'Describir si aplica...', 'class': 'form-control'}
+            ),
         }
         labels = {
             'fecha_hora': 'Fecha y Hora de Administración',
@@ -157,18 +187,22 @@ class RNDeleteForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean_clave_firma(self):
+        from django.core.exceptions import ValidationError
+
         clave = self.cleaned_data.get("clave_firma")
 
         if not clave:
-            raise forms.ValidationError("Debe ingresar la clave para validar la eliminación.")
+            raise ValidationError("Debe ingresar la clave para validar la eliminación.")
 
         if self.user is None or not self.user.is_authenticated:
-            raise forms.ValidationError("Debe iniciar sesión para poder eliminar registros.")
+            raise ValidationError("Debe iniciar sesión para poder eliminar registros.")
 
         if not self.user.check_password(clave):
-            raise forms.ValidationError("La clave no coincide con su contraseña de usuario.")
+            raise ValidationError("La clave no coincide con su contraseña de usuario.")
 
         return clave
+
+
 class DefuncionRNForm(forms.ModelForm):
     class Meta:
         model = DefuncionRN

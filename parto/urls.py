@@ -1,6 +1,7 @@
 # parto/urls.py
 from django.urls import path
 from . import views
+from .views import PartoCreateView
 
 urlpatterns = [
     # Lista de partos
@@ -19,5 +20,7 @@ urlpatterns = [
     path('<int:parto_pk>/observaciones/', views.PartoObservacionesView.as_view(), name='parto_observaciones'),
     
     path('crear/madre/<int:madre_id>/', views.PartoCreateView.as_view(), name='parto_crear_para_madre'),
+    
+    path('nuevo/<int:madre_id>/', PartoCreateView.as_view(), name='parto_nuevo'),
 
 ]

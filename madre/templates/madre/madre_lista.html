@@ -26,8 +26,15 @@
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label for="filtro_rut" class="form-label small">RUT</label>
-                <input type="text" name="rut" id="filtro_rut" class="form-control"
-                       placeholder="Ej: 12345678-9" value="{{ request.GET.rut|default:'' }}">
+                <input
+                    type="text"
+                    name="rut"
+                    id="filtro_rut"
+                    class="form-control"
+                    placeholder="Ej: 12345678-9"
+                    value="{{ request.GET.rut|default:'' }}"
+                    pattern="\d{8}-[\dkK]"
+                    title="Debe tener 8 números, un guion y luego un dígito o K.">
             </div>
             <div class="col-md-3">
                 <label for="filtro_comuna" class="form-label small">Comuna</label>
@@ -141,13 +148,7 @@
                                   <label class="form-label">Hora de la Muerte</label>
                                   <input type="time" name="hora_muerte" class="form-control mb-3" required>
 
-                                  <label class="form-label">Estado del Recién Nacido</label>
-                                  <select name="estado_rn" class="form-select mb-3" required>
-                                      <option value="" disabled selected>Seleccione una opción</option>
-                                      <option value="vivo">Vivo</option>
-                                      <option value="muerto">Muerto</option>
-                                      <option value="critico">Crítico</option>
-                                  </select>
+                                  <!-- Eliminado: Estado del Recién Nacido -->
 
                                   <hr class="my-3">
                                   <label class="form-label">Confirme con su Clave</label>
@@ -196,7 +197,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const filtroRut = document.getElementById("filtro_rut");
     if (filtroRut) {
         filtroRut.addEventListener("input", function () {
-            let v = this.value.replace(/[^0-9kK\-]/g, "").replace(/(\-.*)\-/g, "$1");
+            let v = this.value;
+
+            // Dejar solo números, k/K y guion
+            v = v.replace(/[^0-9kK\-]/g, "");
+
+            // Evitar más de un guion
+            v = v.replace(/(\-.*)\-/g, "$1");
+
             this.value = v;
         });
     }
