@@ -1,12 +1,16 @@
 # parto/models.py
 from django.db import models
 from madre.models import Madre
-from django.contrib.auth.models import User   # ✔️ reemplazo correcto
+from django.contrib.auth.models import User
 from catalogo.models import Catalogo
 
 
 class Parto(models.Model):
-    madre = models.ForeignKey(Madre, on_delete=models.PROTECT, related_name="partos")
+    madre = models.ForeignKey(
+        Madre,
+        on_delete=models.PROTECT,
+        related_name="partos"
+    )
     fecha = models.DateField()
     hora = models.TimeField()
     tipo_parto = models.ForeignKey(
@@ -34,19 +38,22 @@ class Parto(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
     activo = models.BooleanField(default=True)
+
     class Meta:
         ordering = ['-id']
+        verbose_name = "Registro de Parto"
+        verbose_name_plural = "Registros de Partos"
 
     def __str__(self):
         return f"Parto de {self.madre} - {self.fecha}"
 
-    class Meta:
-        verbose_name = "Registro de Parto"
-        verbose_name_plural = "Registros de Partos"
-
 
 class ModeloAtencionParto(models.Model):
-    parto = models.OneToOneField(Parto, on_delete=models.CASCADE, related_name="modelo_atencion")
+    parto = models.OneToOneField(
+        Parto,
+        on_delete=models.CASCADE,
+        related_name="modelo_atencion"
+    )
 
     libertad_movimiento = models.BooleanField(default=False)
     regimen_hidrico_amplio = models.BooleanField(default=False)
@@ -62,7 +69,11 @@ class ModeloAtencionParto(models.Model):
 
 
 class RobsonParto(models.Model):
-    parto = models.OneToOneField(Parto, on_delete=models.CASCADE, related_name="clasificacion_robson")
+    parto = models.OneToOneField(
+        Parto,
+        on_delete=models.CASCADE,
+        related_name="clasificacion_robson"
+    )
 
     grupo = models.CharField(max_length=10)
     cesarea_electiva = models.BooleanField(default=False)
@@ -77,14 +88,29 @@ class RobsonParto(models.Model):
 
 
 class PartoObservacion(models.Model):
-    parto = models.ForeignKey(Parto, on_delete=models.CASCADE, related_name="observaciones")
-    autor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="obs_parto")  # ✔️ corregido
+    parto = models.ForeignKey(
+        Parto,
+        on_delete=models.CASCADE,
+        related_name="observaciones"
+    )
+    # Permite borrar el usuario: deja autor en NULL y NO lanza ProtectedError
+    autor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="obs_parto"
+    )
     texto = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     firma_simple = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Observación de {self.autor} en {self.parto.fecha}"
+        if self.autor:
+            nombre = self.autor.get_full_name() or self.autor.username
+        else:
+            nombre = "Autor eliminado"
+        return f"Observación de {nombre} en {self.parto.fecha}"
 
     class Meta:
         verbose_name = "Observación de Parto"

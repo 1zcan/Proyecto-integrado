@@ -5,12 +5,7 @@
 {% block content %}
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Reporte General de Defunciones</h2>
-        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-            <i class="bi bi-printer"></i> Imprimir Pantalla
-        </button>
-    </div>
+
 
     <div class="card shadow-sm border-0 mb-5">
         <div class="card-header bg-danger text-white">
@@ -39,7 +34,11 @@
                             <span class="text-muted fst-italic">{{ d.razon|truncatechars:60 }}</span>
                         </td>
                         <td>
-                            {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username|default:"Sistema" }}
+                            {% if d.usuario_registra %}
+                                {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username }}
+                            {% else %}
+                                Sistema
+                            {% endif %}
                         </td>
                         <td class="text-end">
                             <a href="{% url 'madre:madre_defuncion_pdf' pk=d.madre.pk %}" 
@@ -72,7 +71,8 @@
                         <th>RN (Madre)</th>
                         <th>Razón</th>
                         <th>Registrado por</th>
-                        <th class="text-end">Acciones</th> </tr>
+                        <th class="text-end">Acciones</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for d in rn %}
@@ -80,15 +80,20 @@
                         <td class="text-nowrap">{{ d.fecha|date:"d/m/Y H:i" }}</td>
                         <td>
                             <strong>Hijo/a de:</strong> {{ d.rn.parto.madre.nombre_completo }} <br>
-                            <small class="text-muted">ID RN: {{ d.rn.pk }} | Sexo: {{ d.rn.get_sexo_display }}</small>
+                            <small class="text-muted">
+                                ID RN: {{ d.rn.pk }} | Sexo: {{ d.rn.get_sexo_display }}
+                            </small>
                         </td>
                         <td>
                             <span class="text-muted fst-italic">{{ d.razon|truncatechars:60 }}</span>
                         </td>
                         <td>
-                            {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username|default:"Sistema" }}
+                            {% if d.usuario_registra %}
+                                {{ d.usuario_registra.get_full_name|default:d.usuario_registra.username }}
+                            {% else %}
+                                Sistema
+                            {% endif %}
                         </td>
-                        
                         <td class="text-end">
                             <a href="{% url 'recien_nacido:rn_defuncion_pdf' pk=d.rn.pk %}" 
                                class="btn btn-sm btn-secondary" 

@@ -2,7 +2,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from catalogo.models import Catalogo
-from django.conf import settings
+
+
 
 class Madre(models.Model):
     rut = models.CharField(max_length=12, unique=True)
@@ -66,14 +67,28 @@ class TamizajeMaterno(models.Model):
 
 
 class MadreObservacion(models.Model):
-    madre = models.ForeignKey(Madre, on_delete=models.CASCADE, related_name="observaciones")
-    autor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="obs_madre")
+    madre = models.ForeignKey(
+        Madre,
+        on_delete=models.CASCADE,
+        related_name="observaciones"
+    )
+    autor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,   # 👈 MUY IMPORTANTE
+        null=True,                  # 👈 permite NULL en la DB
+        blank=True,
+        related_name="obs_madre"
+    )
     texto = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     firma_simple = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Observación de {self.autor} (Madre: {self.madre.id})"
+        if self.autor:
+            nombre = self.autor.get_full_name() or self.autor.username
+        else:
+            nombre = "Autor eliminado"
+        return f"Observación de {nombre} (Madre: {self.madre.pk})"
 
     class Meta:
         verbose_name = "Observación de Madre"
@@ -81,14 +96,30 @@ class MadreObservacion(models.Model):
         ordering = ['-fecha']
 
 class DefuncionMadre(models.Model):
-    madre = models.ForeignKey(Madre, on_delete=models.CASCADE, related_name='defunciones')
+    madre = models.ForeignKey(
+        'Madre',                         # referencia por nombre, por si Madre está más abajo
+        on_delete=models.CASCADE,
+        related_name='defunciones'
+    )
     fecha = models.DateTimeField(auto_now_add=True)
     razon = models.TextField()
-    usuario_registra = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    usuario_registra = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,       # 👈 también SET_NULL para que no bloquee al borrar usuario
+        null=True,
+        blank=True,
+        related_name='defunciones_madre_registradas'
+    )
+
+    def __str__(self):
+        nombre_madre = getattr(self.madre, "nombre_completo", f"Madre ID {self.madre_id}")
+        if self.usuario_registra:
+            registrador = self.usuario_registra.get_full_name() or self.usuario_registra.username
+        else:
+            registrador = "Sistema"
+        return f"Defunción de {nombre_madre} ({self.fecha.date()}) registrada por {registrador}"
 
     class Meta:
         verbose_name = "Defunción de Madre"
         verbose_name_plural = "Defunciones de Madres"
-
-    def __str__(self):
-        return f"Defunción de {self.madre} - {self.fecha}"
+        ordering = ['-fecha']

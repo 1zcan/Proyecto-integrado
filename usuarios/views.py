@@ -4,7 +4,6 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.core.mail import send_mail  # ya no lo usamos, pero lo puedes quitar si quieres
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -60,7 +59,7 @@ def registro(request):
             user.is_active = False
             user.save()
             
-            # Asignar rol por defecto
+            # Asignar rol por defecto si existe perfil
             if hasattr(user, 'perfil'):
                 user.perfil.rol = 'usuario'
                 user.perfil.save()
@@ -139,7 +138,7 @@ def login_view(request):
                 messages.error(request, 'Nombre de usuario o contraseña incorrectos.')
                 return render(request, 'usuarios/login.html', {'form': form, 'hide_navigation': True})
 
-            # ⚡ SUPERUSER entra directo sin 2FA
+            # SUPERUSER entra directo sin 2FA
             if usuario.is_superuser:
                 login(request, usuario)
                 messages.success(request, f'Bienvenido administrador {usuario.username}')
@@ -315,8 +314,13 @@ def gestion_usuarios(request):
 @login_required
 @user_passes_test(es_admin_sistema)
 def eliminar_usuario(request, user_id):
+    """
+    Elimina un usuario. Para que esto nunca lance ProtectedError,
+    todos los modelos que lo referencian deben usar on_delete=CASCADE o SET_NULL.
+    """
     usuario = get_object_or_404(User, pk=user_id)
 
+    # Evitar que un admin se borre a sí mismo
     if request.user.id == usuario.id:
         messages.error(request, "No puedes eliminar tu propio usuario.")
         return redirect('usuarios:gestion_usuarios')
@@ -327,6 +331,7 @@ def eliminar_usuario(request, user_id):
         messages.success(request, f"Usuario '{nombre}' eliminado correctamente.")
         return redirect('usuarios:gestion_usuarios')
 
+    # 👇 Usa el template que ya tienes
     return render(request, 'usuarios/confirmar_eliminar_usuario.html', {
         'usuario': usuario,
         'hide_navigation': False,
