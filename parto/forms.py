@@ -3,10 +3,12 @@ from django import forms
 from .models import Parto, ModeloAtencionParto, RobsonParto, PartoObservacion
 
 
+
 class PartoForm(forms.ModelForm):
     """
-    Formulario para crear/editar el registro del parto [cite: 42, 198]
+    Formulario para crear/editar el registro del parto.
     """
+
     class Meta:
         model = Parto
         fields = [
@@ -28,17 +30,18 @@ class PartoForm(forms.ModelForm):
                 attrs={
                     'type': 'date',
                     'class': 'form-control',
-                }
+                },
+                format='%Y-%m-%d'
             ),
             'hora': forms.TimeInput(
                 attrs={
                     'type': 'time',
                     'class': 'form-control',
-                }
+                },
+                format='%H:%M'
             ),
             'madre': forms.Select(attrs={'class': 'form-select'}),
             'tipo_parto': forms.Select(attrs={'class': 'form-select'}),
-
             # EG (Semanas) → bloqueamos negativos en HTML
             'edad_gestacional_semanas': forms.NumberInput(
                 attrs={
@@ -46,16 +49,21 @@ class PartoForm(forms.ModelForm):
                     'min': 0,
                 }
             ),
-
             'establecimiento': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Formatos que el form aceptará al parsear los valores
+        self.fields['fecha'].input_formats = ['%Y-%m-%d']
+        self.fields['hora'].input_formats = ['%H:%M']
 
     # Validación en el servidor para EG (Semanas)
     def clean_edad_gestacional_semanas(self):
         eg = self.cleaned_data.get('edad_gestacional_semanas')
 
         if eg is None:
-            return eg  # si el campo es opcional
+            return eg  # por si en algún momento lo vuelves opcional
 
         if eg < 0:
             raise forms.ValidationError("La EG (semanas) no puede ser negativa.")
